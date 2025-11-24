@@ -85,6 +85,32 @@ public class PatientDAO {
         return patients;
     }
 
+    // Read - Get recent patients
+    public List<Patient> getRecentPatients(int limit) {
+        List<Patient> patients = new ArrayList<>();
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        Cursor cursor = database.query(
+                DatabaseHelper.TABLE_PATIENTS,
+                null, null, null, null, null,
+                DatabaseHelper.KEY_CREATED_AT + " DESC",
+                String.valueOf(limit)
+        );
+
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    patients.add(cursorToPatient(cursor));
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return patients;
+    }
+
     // Read - Search patients
     public List<Patient> searchPatients(String query) {
         List<Patient> patients = new ArrayList<>();
@@ -181,32 +207,6 @@ public class PatientDAO {
         }
 
         return count;
-    }
-
-    // Get recent patients
-    public List<Patient> getRecentPatients(int limit) {
-        List<Patient> patients = new ArrayList<>();
-        SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null, null, null, null, null,
-                DatabaseHelper.KEY_CREATED_AT + " DESC",
-                String.valueOf(limit)
-        );
-
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                do {
-                    patients.add(cursorToPatient(cursor));
-                } while (cursor.moveToNext());
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-
-        return patients;
     }
 
     // Helper method to convert cursor to Patient object

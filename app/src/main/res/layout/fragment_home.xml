@@ -80,12 +80,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Today's Visits"
+                        android:text="Monthly Consultations"
                         android:textColor="@color/text_secondary"
                         android:textSize="14sp" />
 
                     <TextView
-                        android:id="@+id/tvTodayAppointments"
+                        android:id="@+id/tvMonthlyConsultations"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -105,12 +105,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Pending Tasks"
+                        android:text="Upcoming Appts"
                         android:textColor="@color/text_secondary"
                         android:textSize="14sp" />
 
                     <TextView
-                        android:id="@+id/tvPendingTasks"
+                        android:id="@+id/tvUpcomingAppointments"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -130,12 +130,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Weekly Visits"
+                        android:text="Today's Appts"
                         android:textColor="@color/text_secondary"
                         android:textSize="14sp" />
 
                     <TextView
-                        android:id="@+id/tvWeeklyVisits"
+                        android:id="@+id/tvTodayAppointmentsCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -199,6 +199,21 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTodayAppointments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="false" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Recently Added Patients"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+            android:textColor="@color/text_primary" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvRecentPatients"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

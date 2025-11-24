@@ -18,10 +18,13 @@ import com.example.medimanager.activities.AddPatientActivity;
 import com.example.medimanager.activities.MainActivity;
 import com.example.medimanager.activities.PatientDetailsActivity;
 import com.example.medimanager.adapters.AppointmentAdapter;
+import com.example.medimanager.adapters.PatientAdapter;
 import com.example.medimanager.database.AppointmentDAO;
+import com.example.medimanager.database.ConsultationDAO;
 import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.databinding.FragmentHomeBinding;
 import com.example.medimanager.models.Appointment;
+import com.example.medimanager.models.Patient;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,10 +39,13 @@ public class HomeFragment extends Fragment {
     // Database
     private PatientDAO patientDAO;
     private AppointmentDAO appointmentDAO;
+    private ConsultationDAO consultationDAO;
 
     // Adapters
     private AppointmentAdapter appointmentAdapter;
     private List<Appointment> todayAppointments;
+    private PatientAdapter recentPatientsAdapter;
+    private List<Patient> recentPatients;
 
     @Nullable
     @Override
@@ -55,6 +61,7 @@ public class HomeFragment extends Fragment {
         // Initialize DAOs
         patientDAO = new PatientDAO(requireContext());
         appointmentDAO = new AppointmentDAO(requireContext());
+        consultationDAO = new ConsultationDAO(requireContext());
 
         // Initialize UI
         setupRecyclerView();
@@ -63,10 +70,12 @@ public class HomeFragment extends Fragment {
         // Load data
         loadStatistics();
         loadTodayAppointments();
+        loadRecentPatients();
         updateDate();
     }
 
     private void setupRecyclerView() {
+        // Today's Appointments
         todayAppointments = new ArrayList<>();
         appointmentAdapter = new AppointmentAdapter(requireContext(), todayAppointments);
 
@@ -88,6 +97,37 @@ public class HomeFragment extends Fragment {
             public void onStatusClick(Appointment appointment) {
                 // Update appointment status
                 updateAppointmentStatus(appointment);
+            }
+        });
+
+        // Recent Patients
+        recentPatients = new ArrayList<>();
+        recentPatientsAdapter = new PatientAdapter(requireContext(), recentPatients);
+
+        binding.rvRecentPatients.setLayoutManager(new LinearLayoutManager(requireContext()));
+        binding.rvRecentPatients.setAdapter(recentPatientsAdapter);
+        binding.rvRecentPatients.setNestedScrollingEnabled(false);
+
+        recentPatientsAdapter.setOnItemClickListener(new PatientAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(Patient patient) {
+                Intent intent = new Intent(requireContext(), PatientDetailsActivity.class);
+                intent.putExtra("PATIENT_ID", patient.getId());
+                startActivity(intent);
+            }
+
+            @Override
+            public void onEditClick(Patient patient) {
+                Intent intent = new Intent(requireContext(), AddPatientActivity.class);
+                intent.putExtra("PATIENT_ID", patient.getId());
+                intent.putExtra("IS_EDIT_MODE", true);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onDeleteClick(Patient patient) {
+                // For dashboard, maybe just show a toast or navigate to details
+                Toast.makeText(requireContext(), "Go to Patients tab to delete", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -113,14 +153,15 @@ public class HomeFragment extends Fragment {
 
         // Load statistics
         int totalPatients = patientDAO.getTotalPatientsCount();
-        int todayAppointmentsCount = appointmentDAO.getTodayAppointmentsCount(today);
+        int monthlyConsultations = consultationDAO.getMonthlyConsultationsCount();
         int upcomingAppointments = appointmentDAO.getUpcomingAppointmentsCount();
+        int todayAppointmentsCount = appointmentDAO.getTodayAppointmentsCount(today);
 
         // Update UI
         binding.tvTotalPatients.setText(String.valueOf(totalPatients));
-        binding.tvTodayAppointments.setText(String.valueOf(todayAppointmentsCount));
-        binding.tvPendingTasks.setText(String.valueOf(upcomingAppointments));
-        binding.tvWeeklyVisits.setText("42"); // Mock data for now
+        binding.tvMonthlyConsultations.setText(String.valueOf(monthlyConsultations));
+        binding.tvUpcomingAppointments.setText(String.valueOf(upcomingAppointments));
+        binding.tvTodayAppointmentsCount.setText(String.valueOf(todayAppointmentsCount));
     }
 
     private void loadTodayAppointments() {
@@ -130,6 +171,13 @@ public class HomeFragment extends Fragment {
         todayAppointments.clear();
         todayAppointments.addAll(appointments);
         appointmentAdapter.notifyDataSetChanged();
+    }
+
+    private void loadRecentPatients() {
+        List<Patient> patients = patientDAO.getRecentPatients(5); // Get last 5 patients
+        recentPatients.clear();
+        recentPatients.addAll(patients);
+        recentPatientsAdapter.notifyDataSetChanged();
     }
 
     private void updateAppointmentStatus(Appointment appointment) {
@@ -173,6 +221,7 @@ public class HomeFragment extends Fragment {
         // Refresh data when returning to this fragment
         loadStatistics();
         loadTodayAppointments();
+        loadRecentPatients();
     }
 
     @Override
