@@ -24,22 +24,16 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginBottom="?attr/actionBarSize"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <com.google.android.material.bottomappbar.BottomAppBar
-        android:id="@+id/bottomAppBar"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom">
-
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottomNavigation"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            app:menu="@menu/bottom_navigation" />
-
-    </com.google.android.material.bottomappbar.BottomAppBar>
+        android:layout_gravity="bottom"
+        android:background="@color/card_background"
+        app:menu="@menu/bottom_navigation" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
@@ -48,7 +42,7 @@
         android:src="@drawable/ic_add"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/margin_medium"
-        android:layout_marginBottom="180dp"
+        android:layout_marginBottom="120dp"
         android:contentDescription="@string/add_new_patient" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
