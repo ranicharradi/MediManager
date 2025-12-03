@@ -20,3 +20,5 @@ cahier-de-charge.pdf
 
 CHANGELOG.md
 /.venv/
+pull_db_export.ps1
+.github/
