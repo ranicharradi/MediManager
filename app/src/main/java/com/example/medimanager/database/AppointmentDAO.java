@@ -22,6 +22,7 @@ public class AppointmentDAO {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.KEY_PATIENT_ID, appointment.getPatientId());
+        values.put(DatabaseHelper.KEY_DOCTOR_ID, appointment.getDoctorId());
         values.put(DatabaseHelper.KEY_APPOINTMENT_DATE, appointment.getAppointmentDate());
         values.put(DatabaseHelper.KEY_APPOINTMENT_TIME, appointment.getAppointmentTime());
         values.put(DatabaseHelper.KEY_REASON, appointment.getReason());
@@ -58,7 +59,7 @@ public class AppointmentDAO {
     }
 
     // Read - Get all appointments
-    public List<Appointment> getAllAppointments() {
+    public List<Appointment> getAllAppointments(int doctorId) {
         List<Appointment> appointments = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
@@ -66,10 +67,11 @@ public class AppointmentDAO {
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
+                " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC, a." +
                 DatabaseHelper.KEY_APPOINTMENT_TIME + " DESC";
 
-        Cursor cursor = database.rawQuery(query, null);
+            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId)});
 
         try {
             if (cursor != null && cursor.moveToFirst()) {
@@ -116,7 +118,7 @@ public class AppointmentDAO {
     }
 
     // Read - Get today's appointments
-    public List<Appointment> getTodayAppointments(String today) {
+    public List<Appointment> getTodayAppointments(int doctorId, String today) {
         List<Appointment> appointments = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
@@ -124,10 +126,10 @@ public class AppointmentDAO {
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
-                " WHERE a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?" +
+                " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_TIME + " ASC";
 
-        Cursor cursor = database.rawQuery(query, new String[]{today});
+            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId), today});
 
         try {
             if (cursor != null && cursor.moveToFirst()) {
@@ -145,7 +147,7 @@ public class AppointmentDAO {
     }
 
     // Read - Get appointments by status
-    public List<Appointment> getAppointmentsByStatus(String status) {
+    public List<Appointment> getAppointmentsByStatus(int doctorId, String status) {
         List<Appointment> appointments = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
@@ -153,10 +155,10 @@ public class AppointmentDAO {
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
-                " WHERE a." + DatabaseHelper.KEY_STATUS + " = ?" +
+                " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND a." + DatabaseHelper.KEY_STATUS + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC";
 
-        Cursor cursor = database.rawQuery(query, new String[]{status});
+            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId), status});
 
         try {
             if (cursor != null && cursor.moveToFirst()) {
@@ -178,6 +180,7 @@ public class AppointmentDAO {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.KEY_PATIENT_ID, appointment.getPatientId());
+        values.put(DatabaseHelper.KEY_DOCTOR_ID, appointment.getDoctorId());
         values.put(DatabaseHelper.KEY_APPOINTMENT_DATE, appointment.getAppointmentDate());
         values.put(DatabaseHelper.KEY_APPOINTMENT_TIME, appointment.getAppointmentTime());
         values.put(DatabaseHelper.KEY_REASON, appointment.getReason());
@@ -217,12 +220,13 @@ public class AppointmentDAO {
     }
 
     // Statistics
-    public int getTodayAppointmentsCount(String today) {
+        public int getTodayAppointmentsCount(int doctorId, String today) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(
                 "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_APPOINTMENTS +
-                        " WHERE " + DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?",
-                new String[]{today}
+                " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND " +
+                DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?",
+            new String[]{String.valueOf(doctorId), today}
         );
 
         int count = 0;
@@ -239,13 +243,14 @@ public class AppointmentDAO {
         return count;
     }
 
-    public int getUpcomingAppointmentsCount() {
+        public int getUpcomingAppointmentsCount(int doctorId) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(
                 "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_APPOINTMENTS +
-                        " WHERE " + DatabaseHelper.KEY_STATUS + " = 'scheduled' OR " +
-                        DatabaseHelper.KEY_STATUS + " = 'in_progress'",
-                null
+                " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND (" +
+                DatabaseHelper.KEY_STATUS + " = 'scheduled' OR " +
+                DatabaseHelper.KEY_STATUS + " = 'in_progress')",
+            new String[]{String.valueOf(doctorId)}
         );
 
         int count = 0;
@@ -268,6 +273,7 @@ public class AppointmentDAO {
 
         appointment.setId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_ID)));
         appointment.setPatientId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_PATIENT_ID)));
+        appointment.setDoctorId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_DOCTOR_ID)));
         appointment.setAppointmentDate(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_APPOINTMENT_DATE)));
         appointment.setAppointmentTime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_APPOINTMENT_TIME)));
         appointment.setReason(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_REASON)));

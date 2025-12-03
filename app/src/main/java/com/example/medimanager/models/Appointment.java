@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class Appointment implements Serializable {
     private int id;
     private int patientId;
+    private int doctorId;
     private String patientName;
     private String appointmentDate;
     private String appointmentTime;
@@ -17,11 +18,12 @@ public class Appointment implements Serializable {
     public Appointment() {
     }
 
-    public Appointment(int id, int patientId, String patientName, String appointmentDate,
+    public Appointment(int id, int patientId, int doctorId, String patientName, String appointmentDate,
                        String appointmentTime, String reason, String status,
                        String notes, String createdAt) {
         this.id = id;
         this.patientId = patientId;
+        this.doctorId = doctorId;
         this.patientName = patientName;
         this.appointmentDate = appointmentDate;
         this.appointmentTime = appointmentTime;
@@ -46,6 +48,14 @@ public class Appointment implements Serializable {
 
     public void setPatientId(int patientId) {
         this.patientId = patientId;
+    }
+
+    public int getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(int doctorId) {
+        this.doctorId = doctorId;
     }
 
     public String getPatientName() {

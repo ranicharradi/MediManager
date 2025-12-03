@@ -1,6 +1,8 @@
 package com.example.medimanager.fragments;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +27,7 @@ import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.databinding.FragmentHomeBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.utils.Constants;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,6 +49,7 @@ public class HomeFragment extends Fragment {
     private List<Appointment> todayAppointments;
     private PatientAdapter recentPatientsAdapter;
     private List<Patient> recentPatients;
+    private int doctorId = -1;
 
     @Nullable
     @Override
@@ -62,6 +66,9 @@ public class HomeFragment extends Fragment {
         patientDAO = new PatientDAO(requireContext());
         appointmentDAO = new AppointmentDAO(requireContext());
         consultationDAO = new ConsultationDAO(requireContext());
+        // Load current doctor id
+        SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
+        doctorId = prefs.getInt(Constants.PREF_USER_ID, -1);
 
         // Initialize UI
         setupRecyclerView();
@@ -152,10 +159,11 @@ public class HomeFragment extends Fragment {
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
         // Load statistics
-        int totalPatients = patientDAO.getTotalPatientsCount();
+        // Load statistics (guard if doctorId missing)
+        int totalPatients = doctorId == -1 ? 0 : patientDAO.getTotalPatientsCount(doctorId);
         int monthlyConsultations = consultationDAO.getMonthlyConsultationsCount();
-        int upcomingAppointments = appointmentDAO.getUpcomingAppointmentsCount();
-        int todayAppointmentsCount = appointmentDAO.getTodayAppointmentsCount(today);
+        int upcomingAppointments = doctorId == -1 ? 0 : appointmentDAO.getUpcomingAppointmentsCount(doctorId);
+        int todayAppointmentsCount = doctorId == -1 ? 0 : appointmentDAO.getTodayAppointmentsCount(doctorId, today);
 
         // Update UI
         binding.tvTotalPatients.setText(String.valueOf(totalPatients));
@@ -166,7 +174,13 @@ public class HomeFragment extends Fragment {
 
     private void loadTodayAppointments() {
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        List<Appointment> appointments = appointmentDAO.getTodayAppointments(today);
+        if (doctorId == -1) {
+            todayAppointments.clear();
+            appointmentAdapter.notifyDataSetChanged();
+            return;
+        }
+
+        List<Appointment> appointments = appointmentDAO.getTodayAppointments(doctorId, today);
 
         todayAppointments.clear();
         todayAppointments.addAll(appointments);
@@ -174,7 +188,13 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadRecentPatients() {
-        List<Patient> patients = patientDAO.getRecentPatients(5); // Get last 5 patients
+        if (doctorId == -1) {
+            recentPatients.clear();
+            recentPatientsAdapter.notifyDataSetChanged();
+            return;
+        }
+
+        List<Patient> patients = patientDAO.getRecentPatients(doctorId, 5); // Get last 5 patients
         recentPatients.clear();
         recentPatients.addAll(patients);
         recentPatientsAdapter.notifyDataSetChanged();

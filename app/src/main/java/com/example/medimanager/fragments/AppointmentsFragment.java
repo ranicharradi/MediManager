@@ -1,6 +1,8 @@
 package com.example.medimanager.fragments;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,8 +21,10 @@ import com.example.medimanager.activities.AddAppointmentActivity;
 import com.example.medimanager.activities.PatientDetailsActivity;
 import com.example.medimanager.adapters.AppointmentAdapter;
 import com.example.medimanager.database.AppointmentDAO;
+import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.databinding.FragmentAppointmentsBinding;
 import com.example.medimanager.models.Appointment;
+import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
 
 import java.util.ArrayList;
@@ -32,10 +36,14 @@ public class AppointmentsFragment extends Fragment {
 
     // Data
     private AppointmentDAO appointmentDAO;
+    private PatientDAO patientDAO;
     private AppointmentAdapter appointmentAdapter;
     private List<Appointment> appointmentList;
     private List<Appointment> filteredList;
     private String currentFilter = "all";
+    private boolean isDoctor = true;
+    private int doctorId = -1;
+    private int patientId = -1;
 
     private final ActivityResultLauncher<Intent> addAppointmentLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -59,6 +67,19 @@ public class AppointmentsFragment extends Fragment {
 
         // Initialize DAO
         appointmentDAO = new AppointmentDAO(requireContext());
+        patientDAO = new PatientDAO(requireContext());
+
+        // Load current user info
+        SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
+        isDoctor = prefs.getBoolean(Constants.PREF_IS_DOCTOR, true);
+        doctorId = prefs.getInt(Constants.PREF_USER_ID, -1);
+        if (!isDoctor) {
+            String email = prefs.getString(Constants.PREF_USER_EMAIL, "");
+            Patient patient = patientDAO.getPatientByEmail(email);
+            if (patient != null) {
+                patientId = patient.getId();
+            }
+        }
 
         // Initialize UI
         setupRecyclerView();
@@ -89,6 +110,10 @@ public class AppointmentsFragment extends Fragment {
 
             @Override
             public void onStatusClick(Appointment appointment) {
+                if (!isDoctor) {
+                    Toast.makeText(requireContext(), "Only doctors can update status", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 updateAppointmentStatus(appointment);
             }
         });
@@ -121,7 +146,19 @@ public class AppointmentsFragment extends Fragment {
     }
 
     private void loadAppointments() {
-        appointmentList = appointmentDAO.getAllAppointments();
+        if (isDoctor) {
+            if (doctorId == -1) {
+                appointmentList = new ArrayList<>();
+            } else {
+                appointmentList = appointmentDAO.getAllAppointments(doctorId);
+            }
+        } else {
+            if (patientId == -1) {
+                appointmentList = new ArrayList<>();
+            } else {
+                appointmentList = appointmentDAO.getAppointmentsByPatient(patientId);
+            }
+        }
         filterAppointments();
     }
 
@@ -154,6 +191,10 @@ public class AppointmentsFragment extends Fragment {
     }
 
     private void updateAppointmentStatus(Appointment appointment) {
+        if (!isDoctor) {
+            return;
+        }
+
         String newStatus;
         if (appointment.isScheduled()) {
             newStatus = Constants.STATUS_IN_PROGRESS;

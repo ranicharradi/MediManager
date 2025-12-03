@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
@@ -45,6 +46,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
     private Calendar selectedDate;
     private int selectedHour = 9;
     private int selectedMinute = 0;
+    private int doctorId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +62,16 @@ public class AddAppointmentActivity extends AppCompatActivity {
         // Initialize DAOs
         appointmentDAO = new AppointmentDAO(this);
         patientDAO = new PatientDAO(this);
+
+        // Load doctor id
+        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
+        boolean isDoctor = prefs.getBoolean(Constants.PREF_IS_DOCTOR, true);
+        doctorId = prefs.getInt(Constants.PREF_USER_ID, -1);
+        if (!isDoctor || doctorId == -1) {
+            Toast.makeText(this, "Only doctors can manage appointments", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         // Initialize UI
         setupSpinners();
@@ -96,7 +108,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
     }
 
     private void loadPatients() {
-        patientList = patientDAO.getAllPatients();
+        patientList = patientDAO.getAllPatients(doctorId);
 
         List<String> patientNames = new ArrayList<>();
         for (Patient patient : patientList) {
@@ -249,6 +261,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
         }
 
         currentAppointment.setPatientId(selectedPatientId);
+        currentAppointment.setDoctorId(doctorId);
         currentAppointment.setAppointmentDate(binding.etAppointmentDate.getText().toString().trim());
         currentAppointment.setAppointmentTime(binding.etAppointmentTime.getText().toString().trim());
         currentAppointment.setReason(binding.etReason.getText().toString().trim());
@@ -269,6 +282,9 @@ public class AddAppointmentActivity extends AppCompatActivity {
         if (isEditMode && appointmentId != -1) {
             // Update existing appointment
             currentAppointment.setId(appointmentId);
+            if (currentAppointment.getDoctorId() == 0) {
+                currentAppointment.setDoctorId(doctorId);
+            }
             int result = appointmentDAO.updateAppointment(currentAppointment);
 
             if (result > 0) {

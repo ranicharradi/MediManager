@@ -21,6 +21,7 @@ public class PatientDAO {
     public long insertPatient(Patient patient) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.KEY_DOCTOR_ID, patient.getDoctorId());
         values.put(DatabaseHelper.KEY_FIRST_NAME, patient.getFirstName());
         values.put(DatabaseHelper.KEY_LAST_NAME, patient.getLastName());
         values.put(DatabaseHelper.KEY_DATE_OF_BIRTH, patient.getDateOfBirth());
@@ -61,13 +62,17 @@ public class PatientDAO {
     }
 
     // Read - Get all patients
-    public List<Patient> getAllPatients() {
+    public List<Patient> getAllPatients(int doctorId) {
         List<Patient> patients = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null, null, null, null, null,
-                DatabaseHelper.KEY_FIRST_NAME + " ASC"
+            DatabaseHelper.TABLE_PATIENTS,
+            null,
+            DatabaseHelper.KEY_DOCTOR_ID + " = ?",
+            new String[]{String.valueOf(doctorId)},
+            null,
+            null,
+            DatabaseHelper.KEY_FIRST_NAME + " ASC"
         );
 
         try {
@@ -86,14 +91,21 @@ public class PatientDAO {
     }
 
     // Read - Get recent patients
-    public List<Patient> getRecentPatients(int limit) {
+    public List<Patient> getRecentPatients(int doctorId, int limit) {
         List<Patient> patients = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
+        String selection = DatabaseHelper.KEY_DOCTOR_ID + " = ?";
+        String[] selectionArgs = new String[]{String.valueOf(doctorId)};
+
         Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null, null, null, null, null,
-                DatabaseHelper.KEY_CREATED_AT + " DESC",
-                String.valueOf(limit)
+            DatabaseHelper.TABLE_PATIENTS,
+            null,
+            selection,
+            selectionArgs,
+            null,
+            null,
+            DatabaseHelper.KEY_CREATED_AT + " DESC",
+            String.valueOf(limit)
         );
 
         try {
@@ -112,12 +124,17 @@ public class PatientDAO {
     }
 
     // Read - Search patients
-    public List<Patient> searchPatients(String query) {
+        public List<Patient> searchPatients(int doctorId, String query) {
         List<Patient> patients = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        String selection = DatabaseHelper.KEY_FIRST_NAME + " LIKE ? OR " +
-                DatabaseHelper.KEY_LAST_NAME + " LIKE ?";
-        String[] selectionArgs = new String[]{"%" + query + "%", "%" + query + "%"};
+        String selection = DatabaseHelper.KEY_DOCTOR_ID + " = ? AND (" +
+            DatabaseHelper.KEY_FIRST_NAME + " LIKE ? OR " +
+            DatabaseHelper.KEY_LAST_NAME + " LIKE ?)";
+        String[] selectionArgs = new String[]{
+            String.valueOf(doctorId),
+            "%" + query + "%",
+            "%" + query + "%"
+        };
 
         Cursor cursor = database.query(
                 DatabaseHelper.TABLE_PATIENTS,
@@ -169,6 +186,7 @@ public class PatientDAO {
     public int updatePatient(Patient patient) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.KEY_DOCTOR_ID, patient.getDoctorId());
         values.put(DatabaseHelper.KEY_FIRST_NAME, patient.getFirstName());
         values.put(DatabaseHelper.KEY_LAST_NAME, patient.getLastName());
         values.put(DatabaseHelper.KEY_DATE_OF_BIRTH, patient.getDateOfBirth());
@@ -213,11 +231,12 @@ public class PatientDAO {
     }
 
     // Statistics
-    public int getTotalPatientsCount() {
+    public int getTotalPatientsCount(int doctorId) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(
-                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_PATIENTS,
-                null
+                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_PATIENTS +
+                        " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ?",
+                new String[]{String.valueOf(doctorId)}
         );
 
         int count = 0;
@@ -234,11 +253,40 @@ public class PatientDAO {
         return count;
     }
 
+    public List<Patient> getPatientsByDoctor(int doctorId) {
+        List<Patient> patients = new ArrayList<>();
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        Cursor cursor = database.query(
+                DatabaseHelper.TABLE_PATIENTS,
+                null,
+                DatabaseHelper.KEY_DOCTOR_ID + " = ?",
+                new String[]{String.valueOf(doctorId)},
+                null,
+                null,
+                DatabaseHelper.KEY_FIRST_NAME + " ASC"
+        );
+
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    patients.add(cursorToPatient(cursor));
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return patients;
+    }
+
     // Helper method to convert cursor to Patient object
     private Patient cursorToPatient(Cursor cursor) {
         Patient patient = new Patient();
 
         patient.setId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_ID)));
+        patient.setDoctorId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_DOCTOR_ID)));
         patient.setFirstName(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_FIRST_NAME)));
         patient.setLastName(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_LAST_NAME)));
         patient.setDateOfBirth(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_DATE_OF_BIRTH)));

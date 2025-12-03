@@ -1,7 +1,9 @@
 package com.example.medimanager.fragments;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -39,6 +41,8 @@ public class PatientsFragment extends Fragment {
     private List<Patient> patientList;
     private List<Patient> filteredList;
 
+    private int doctorId = -1;
+
     private final ActivityResultLauncher<Intent> patientFormLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -61,6 +65,10 @@ public class PatientsFragment extends Fragment {
 
         // Initialize DAO
         patientDAO = new PatientDAO(requireContext());
+
+        // Load current doctor id
+        SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
+        doctorId = prefs.getInt(Constants.PREF_USER_ID, -1);
 
         // Initialize UI
         setupRecyclerView();
@@ -122,7 +130,13 @@ public class PatientsFragment extends Fragment {
     }
 
     private void loadPatients() {
-        patientList = patientDAO.getAllPatients();
+        if (doctorId == -1) {
+            patientList.clear();
+            filterPatients("");
+            return;
+        }
+
+        patientList = patientDAO.getAllPatients(doctorId);
         filterPatients(binding.etSearch.getText().toString().trim());
     }
 

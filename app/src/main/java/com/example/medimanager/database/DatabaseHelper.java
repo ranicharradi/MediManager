@@ -10,7 +10,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Database Info
     private static final String DATABASE_NAME = "medimanager.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     // Table Names
     public static final String TABLE_PATIENTS = "patients";
@@ -36,6 +36,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Consultations Table Columns
     public static final String KEY_PATIENT_ID = "patient_id";
+    public static final String KEY_DOCTOR_ID = "doctor_id";
     public static final String KEY_CONSULTATION_DATE = "consultation_date";
     public static final String KEY_DIAGNOSIS = "diagnosis";
     public static final String KEY_TREATMENT = "treatment";
@@ -60,6 +61,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String CREATE_TABLE_PATIENTS =
             "CREATE TABLE " + TABLE_PATIENTS + " (" +
                     KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    KEY_DOCTOR_ID + " INTEGER NOT NULL, " +
                     KEY_FIRST_NAME + " TEXT NOT NULL, " +
                     KEY_LAST_NAME + " TEXT NOT NULL, " +
                     KEY_DATE_OF_BIRTH + " TEXT, " +
@@ -70,7 +72,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     KEY_BLOOD_GROUP + " TEXT, " +
                     KEY_ALLERGIES + " TEXT, " +
                     KEY_LAST_VISIT + " TEXT, " +
-                    KEY_CREATED_AT + " DATETIME DEFAULT CURRENT_TIMESTAMP" +
+                    KEY_CREATED_AT + " DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY(" + KEY_DOCTOR_ID + ") REFERENCES " +
+                    TABLE_USERS + "(" + KEY_ID + ") ON DELETE CASCADE" +
                     ")";
 
     private static final String CREATE_TABLE_CONSULTATIONS =
@@ -91,6 +95,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             "CREATE TABLE " + TABLE_APPOINTMENTS + " (" +
                     KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     KEY_PATIENT_ID + " INTEGER NOT NULL, " +
+                    KEY_DOCTOR_ID + " INTEGER NOT NULL, " +
                     KEY_APPOINTMENT_DATE + " TEXT NOT NULL, " +
                     KEY_APPOINTMENT_TIME + " TEXT NOT NULL, " +
                     KEY_REASON + " TEXT, " +
@@ -98,7 +103,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     KEY_NOTES + " TEXT, " +
                     KEY_CREATED_AT + " DATETIME DEFAULT CURRENT_TIMESTAMP, " +
                     "FOREIGN KEY(" + KEY_PATIENT_ID + ") REFERENCES " +
-                    TABLE_PATIENTS + "(" + KEY_ID + ") ON DELETE CASCADE" +
+                    TABLE_PATIENTS + "(" + KEY_ID + ") ON DELETE CASCADE, " +
+                    "FOREIGN KEY(" + KEY_DOCTOR_ID + ") REFERENCES " +
+                    TABLE_USERS + "(" + KEY_ID + ") ON DELETE CASCADE" +
                     ")";
 
     private static final String CREATE_TABLE_USERS =
@@ -136,8 +143,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_TABLE_USERS);
 
         // Insert sample data for testing
-        insertSampleData(db);
         insertSampleUsers(db);
+        insertSampleData(db);
     }
 
     @Override
@@ -161,50 +168,51 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private void insertSampleData(SQLiteDatabase db) {
         // Insert sample patients (Tunisian names and phone numbers)
+        // All sample patients belong to the sample doctor (id=1)
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
-                KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
+                KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "('Fatma', 'Trabelsi', '1990-05-15', 'Female', '+216 20 123 456', 'fatma.trabelsi@email.tn', 'A+', '2025-11-10')");
+                "(1, 'Fatma', 'Trabelsi', '1990-05-15', 'Female', '+216 20 123 456', 'fatma.trabelsi@email.tn', 'A+', '2025-11-10')");
 
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
-                KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
+                KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "('Mohamed', 'Ben Ali', '1978-08-22', 'Male', '+216 55 987 654', 'mohamed.benali@email.tn', 'O+', '2025-11-12')");
+                "(1, 'Mohamed', 'Ben Ali', '1978-08-22', 'Male', '+216 55 987 654', 'mohamed.benali@email.tn', 'O+', '2025-11-12')");
 
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
-                KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
+                KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "('Amira', 'Jaziri', '1997-03-08', 'Female', '+216 98 765 432', 'amira.jaziri@email.tn', 'B+', '2025-11-08')");
+                "(1, 'Amira', 'Jaziri', '1997-03-08', 'Female', '+216 98 765 432', 'amira.jaziri@email.tn', 'B+', '2025-11-08')");
 
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
-                KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
+                KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "('Ahmed', 'Gharbi', '1973-11-30', 'Male', '+216 22 333 444', 'ahmed.gharbi@email.tn', 'AB+', '2025-11-09')");
+                "(1, 'Ahmed', 'Gharbi', '1973-11-30', 'Male', '+216 22 333 444', 'ahmed.gharbi@email.tn', 'AB+', '2025-11-09')");
 
-        // Insert sample appointments
+        // Insert sample appointments (all belong to doctor id=1)
         db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
-                KEY_PATIENT_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
+                KEY_PATIENT_ID + ", " + KEY_DOCTOR_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
                 KEY_REASON + ", " + KEY_STATUS + ") VALUES " +
-                "(1, '2025-11-12', '09:00 AM', 'Consultation Générale', 'completed')");
-
-        db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
-                KEY_PATIENT_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
-                KEY_REASON + ", " + KEY_STATUS + ") VALUES " +
-                "(2, '2025-11-12', '10:30 AM', 'Suivi', 'in_progress')");
+                "(1, 1, '2025-11-12', '09:00 AM', 'Consultation Générale', 'completed')");
 
         db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
-                KEY_PATIENT_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
+                KEY_PATIENT_ID + ", " + KEY_DOCTOR_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
                 KEY_REASON + ", " + KEY_STATUS + ") VALUES " +
-                "(3, '2025-11-12', '02:00 PM', 'Urgence', 'scheduled')");
+                "(2, 1, '2025-11-12', '10:30 AM', 'Suivi', 'in_progress')");
 
         db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
-                KEY_PATIENT_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
+                KEY_PATIENT_ID + ", " + KEY_DOCTOR_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
                 KEY_REASON + ", " + KEY_STATUS + ") VALUES " +
-                "(4, '2025-11-12', '03:30 PM', 'Vaccination', 'scheduled')");
+                "(3, 1, '2025-11-12', '02:00 PM', 'Urgence', 'scheduled')");
+
+        db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
+                KEY_PATIENT_ID + ", " + KEY_DOCTOR_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
+                KEY_REASON + ", " + KEY_STATUS + ") VALUES " +
+                "(4, 1, '2025-11-12', '03:30 PM', 'Vaccination', 'scheduled')");
     }
 
     private void insertSampleUsers(SQLiteDatabase db) {

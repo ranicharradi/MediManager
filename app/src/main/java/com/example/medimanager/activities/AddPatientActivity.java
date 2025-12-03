@@ -1,6 +1,7 @@
 package com.example.medimanager.activities;
 
 import android.app.DatePickerDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
@@ -11,6 +12,7 @@ import com.example.medimanager.R;
 import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.databinding.ActivityAddPatientBinding;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.utils.Constants;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -25,6 +27,7 @@ public class AddPatientActivity extends AppCompatActivity {
     private Patient currentPatient;
     private boolean isEditMode = false;
     private Calendar selectedDate;
+    private int doctorId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +37,15 @@ public class AddPatientActivity extends AppCompatActivity {
 
         // Initialize DAO
         patientDAO = new PatientDAO(this);
+        
+        // Load doctor id
+        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
+        doctorId = prefs.getInt(Constants.PREF_USER_ID, -1);
+        if (doctorId == -1) {
+            Toast.makeText(this, "Unable to determine doctor account", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         // Check if editing existing patient
         checkEditMode();
@@ -176,6 +188,7 @@ public class AddPatientActivity extends AppCompatActivity {
             currentPatient = new Patient();
         }
 
+        currentPatient.setDoctorId(doctorId);
         currentPatient.setFirstName(binding.etFirstName.getText().toString().trim());
         currentPatient.setLastName(binding.etLastName.getText().toString().trim());
         currentPatient.setDateOfBirth(binding.etDateOfBirth.getText().toString().trim());
