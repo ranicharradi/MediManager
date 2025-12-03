@@ -13,6 +13,7 @@ MediManager est une application Android native développée pour faciliter la ge
 - Gérer les rendez-vous avec un système de notifications.
 - Offrir une interface utilisateur simple et rapide.
 - Garantir la persistance des données via SQLite.
+- Authentification sécurisée avec rôles (Médecin/Patient).
 
 ## Cahier des Charges Fonctionnel
 
@@ -30,6 +31,14 @@ MediManager est une application Android native développée pour faciliter la ge
 
 - **Fonctionnalités :** Planifier, Modifier, Annuler, Marquer comme terminé, Voir (Jour/Semaine/Tous), Notifications.
 - **Infos Rendez-vous :** Lien Patient, Date, Heure, Motif, Statut (Programmé/Terminé/Annulé), Notes.
+
+### Authentification & Rôles
+
+- **Connexion :** Sélection du rôle (Médecin/Patient), validation email/mot de passe.
+- **Inscription :** Création de compte avec rôle, prénom, nom, email, téléphone, mot de passe.
+- **Comptes de test :**
+  - Médecin : `doctor@medimanager.tn` / `doctor123`
+  - Patient : `patient@medimanager.tn` / `patient123`
 
 ### Tableau de Bord & Statistiques
 
@@ -98,6 +107,21 @@ CREATE TABLE appointments (
 );
 ```
 
+**Table `users`**
+
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT NOT NULL,
+    phone TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 ## Structure du Projet
 
 ```text
@@ -106,8 +130,8 @@ app/
     activities/           # Écrans principaux (MainActivity, AddPatientActivity, etc.)
     fragments/            # Fragments de tableau de bord et listes
     adapters/             # Adapters RecyclerView
-    database/             # Helper SQLite et classes DAO
-    models/               # Modèles de données (Patient, Consultation, Appointment)
+    database/             # Helper SQLite et classes DAO (PatientDAO, ConsultationDAO, AppointmentDAO, UserDAO)
+    models/               # Modèles de données (Patient, Consultation, Appointment, User)
     utils/                # Constantes et utilitaires
   src/main/res/           # Layouts, drawables, valeurs
 ```

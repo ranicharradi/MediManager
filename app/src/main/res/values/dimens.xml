@@ -29,6 +29,11 @@
     <dimen name="button_radius">8dp</dimen>
     <dimen name="button_elevation">2dp</dimen>
 
+    <!-- Radius -->
+    <dimen name="radius_small">8dp</dimen>
+    <dimen name="radius_medium">12dp</dimen>
+    <dimen name="radius_large">16dp</dimen>
+
     <!-- Icon -->
     <dimen name="icon_size_small">20dp</dimen>
     <dimen name="icon_size_normal">24dp</dimen>

@@ -32,8 +32,14 @@ public class Constants {
 
     // Preferences
     public static final String PREF_NAME = "MediManagerPrefs";
+    public static final String PREFS_NAME = "MediManagerPrefs";
     public static final String PREF_FIRST_LAUNCH = "first_launch";
     public static final String PREF_DARK_MODE = "dark_mode";
+    public static final String PREF_IS_LOGGED_IN = "is_logged_in";
+    public static final String PREF_IS_DOCTOR = "is_doctor";
+    public static final String PREF_USER_EMAIL = "user_email";
+    public static final String PREF_USER_ID = "user_id";
+    public static final String PREF_USER_NAME = "user_name";
 
     // Database
     public static final int DATABASE_VERSION = 1;
