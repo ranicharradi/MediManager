@@ -140,6 +140,31 @@ public class PatientDAO {
         return patients;
     }
 
+    // Read - Get patient by email
+    public Patient getPatientByEmail(String email) {
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        Cursor cursor = database.query(
+                DatabaseHelper.TABLE_PATIENTS,
+                null,
+                DatabaseHelper.KEY_EMAIL + " = ?",
+                new String[]{email},
+                null, null, null
+        );
+
+        Patient patient = null;
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                patient = cursorToPatient(cursor);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return patient;
+    }
+
     // Update
     public int updatePatient(Patient patient) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();

@@ -173,4 +173,16 @@
     <string name="email_already_registered">This email is already registered</string>
     <string name="password_too_short">Password must be at least 6 characters</string>
     <string name="passwords_dont_match">Passwords do not match</string>
+
+    <!-- Profile & Logout -->
+    <string name="logout">Logout</string>
+
+    <!-- Patient View -->
+    <string name="welcome_patient">Welcome back</string>
+    <string name="my_appointments">My Appointments</string>
+    <string name="my_consultations">My Consultations</string>
+    <string name="book_new_appointment">Book New Appointment</string>
+    <string name="upcoming_appointments">Upcoming Appointments</string>
+    <string name="no_upcoming_appointments">No upcoming appointments</string>
+    <string name="recent_consultations">Recent Consultations</string>
 </resources>

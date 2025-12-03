@@ -1,6 +1,7 @@
 package com.example.medimanager.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Menu;
@@ -15,12 +16,15 @@ import com.example.medimanager.R;
 import com.example.medimanager.databinding.ActivityMainBinding;
 import com.example.medimanager.fragments.AppointmentsFragment;
 import com.example.medimanager.fragments.HomeFragment;
+import com.example.medimanager.fragments.PatientHomeFragment;
 import com.example.medimanager.fragments.PatientsFragment;
 import com.example.medimanager.fragments.ProfileFragment;
+import com.example.medimanager.utils.Constants;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+    private boolean isDoctor = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,13 +34,39 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.toolbar);
 
+        // Check user role
+        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
+        isDoctor = prefs.getBoolean(Constants.PREF_IS_DOCTOR, true);
+
+        // Setup navigation based on role
+        setupNavigation();
+
         // Set the initial fragment
         if (savedInstanceState == null) {
-            loadFragment(new HomeFragment());
+            if (isDoctor) {
+                loadFragment(new HomeFragment());
+            } else {
+                loadFragment(new PatientHomeFragment());
+            }
             binding.fab.setVisibility(View.GONE);
         }
+    }
 
-        // Handle bottom navigation item selection
+    private void setupNavigation() {
+        if (isDoctor) {
+            // Doctor sees full navigation
+            binding.bottomNavigation.getMenu().clear();
+            binding.bottomNavigation.inflateMenu(R.menu.bottom_navigation);
+            setupDoctorNavigation();
+        } else {
+            // Patient sees limited navigation
+            binding.bottomNavigation.getMenu().clear();
+            binding.bottomNavigation.inflateMenu(R.menu.bottom_navigation_patient);
+            setupPatientNavigation();
+        }
+    }
+
+    private void setupDoctorNavigation() {
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
@@ -56,6 +86,30 @@ public class MainActivity extends AppCompatActivity {
                 binding.fab.setOnClickListener(v -> {
                     startActivity(new Intent(this, AddPatientActivity.class));
                 });
+            } else if (itemId == R.id.nav_profile) {
+                selectedFragment = new ProfileFragment();
+                binding.fab.setVisibility(View.GONE);
+            }
+
+            if (selectedFragment != null) {
+                loadFragment(selectedFragment);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void setupPatientNavigation() {
+        binding.bottomNavigation.setOnItemSelectedListener(item -> {
+            Fragment selectedFragment = null;
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.nav_home) {
+                selectedFragment = new PatientHomeFragment();
+                binding.fab.setVisibility(View.GONE);
+            } else if (itemId == R.id.nav_appointments) {
+                selectedFragment = new AppointmentsFragment();
+                binding.fab.setVisibility(View.GONE); // Patients can't add appointments
             } else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
                 binding.fab.setVisibility(View.GONE);

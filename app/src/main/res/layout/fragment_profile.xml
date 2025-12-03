@@ -17,6 +17,20 @@
         android:src="@drawable/ic_doctor" />
 
     <TextView
+        android:id="@+id/tvRole"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_status_scheduled"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="4dp"
+        android:text="@string/doctor"
+        android:textColor="@color/text_white"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/doctor_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -60,18 +74,21 @@
             android:layout_marginTop="16dp"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
+            android:focusable="true"
             android:orientation="horizontal"
             android:padding="8dp">
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_edit" />
+                android:src="@drawable/ic_edit"
+                android:contentDescription="@string/edit_profile" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical"
                 android:text="@string/edit_profile" />
         </LinearLayout>
 
@@ -82,19 +99,49 @@
             android:layout_marginTop="8dp"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
+            android:focusable="true"
             android:orientation="horizontal"
             android:padding="8dp">
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_notifications" />
+                android:src="@drawable/ic_notifications"
+                android:contentDescription="@string/notifications" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical"
                 android:text="@string/notifications" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/logout_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_logout"
+                app:tint="@color/error"
+                android:contentDescription="@string/logout" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical"
+                android:text="@string/logout"
+                android:textColor="@color/error" />
         </LinearLayout>
 
     </LinearLayout>
