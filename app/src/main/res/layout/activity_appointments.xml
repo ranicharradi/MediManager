@@ -32,7 +32,7 @@
                     android:textSize="24sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary"
-                    android:layout_marginBottom="16dp"/>
+                    android:layout_marginBottom="16dp" />
 
                 <!-- Filter Chips -->
                 <com.google.android.material.chip.ChipGroup
@@ -48,28 +48,28 @@
                         android:layout_height="wrap_content"
                         android:text="@string/all"
                         android:checked="true"
-                        style="@style/Widget.Material3.Chip.Filter"/>
+                        style="@style/Widget.Material3.Chip.Filter" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipScheduled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/scheduled"
-                        style="@style/Widget.Material3.Chip.Filter"/>
+                        style="@style/Widget.Material3.Chip.Filter" />
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chipInProgress"
+                        android:id="@+id/chipPending"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/in_progress"
-                        style="@style/Widget.Material3.Chip.Filter"/>
+                        android:text="@string/pending"
+                        style="@style/Widget.Material3.Chip.Filter" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipCompleted"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/completed"
-                        style="@style/Widget.Material3.Chip.Filter"/>
+                        style="@style/Widget.Material3.Chip.Filter" />
                 </com.google.android.material.chip.ChipGroup>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -80,7 +80,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="8dp"
-            android:clipToPadding="false"/>
+            android:clipToPadding="false" />
 
         <!-- Empty State -->
         <TextView
@@ -96,7 +96,7 @@
             android:visibility="gone"
             android:drawableTop="@android:drawable/ic_menu_my_calendar"
             android:drawableTint="@color/text_hint"
-            android:drawablePadding="16dp"/>
+            android:drawablePadding="16dp" />
     </LinearLayout>
 
     <!-- Floating Action Button -->
@@ -109,6 +109,6 @@
         android:src="@android:drawable/ic_input_add"
         app:tint="@color/text_white"
         app:backgroundTint="@color/primary"
-        android:contentDescription="Add appointment"/>
+        android:contentDescription="Add appointment" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

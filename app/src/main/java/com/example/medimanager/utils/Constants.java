@@ -9,6 +9,7 @@ public class Constants {
     public static final String EXTRA_IS_EDIT_MODE = "IS_EDIT_MODE";
 
     // Appointment Status
+    public static final String STATUS_PENDING = "pending";
     public static final String STATUS_SCHEDULED = "scheduled";
     public static final String STATUS_IN_PROGRESS = "in_progress";
     public static final String STATUS_COMPLETED = "completed";

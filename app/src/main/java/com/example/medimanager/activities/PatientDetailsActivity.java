@@ -21,6 +21,7 @@ import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Consultation;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.NotificationHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,6 +147,51 @@ public class PatientDetailsActivity extends AppCompatActivity {
         binding.rvAppointments.setLayoutManager(new LinearLayoutManager(this));
         binding.rvAppointments.setAdapter(appointmentAdapter);
         binding.rvAppointments.setNestedScrollingEnabled(false);
+
+        appointmentAdapter.setOnItemClickListener(new AppointmentAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(Appointment appointment) {
+                // If pending, show approval dialog
+                if (appointment.isPending()) {
+                    showApprovalDialog(appointment);
+                } else {
+                    // Show appointment info
+                    String info = "Appointment: " + appointment.getReason() + "\n" +
+                            "Date: " + appointment.getAppointmentDate() + "\n" +
+                            "Time: " + appointment.getAppointmentTime() + "\n" +
+                            "Status: " + appointment.getStatusDisplayName();
+                    Toast.makeText(PatientDetailsActivity.this, info, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onStatusClick(Appointment appointment) {
+                // If pending, show approval dialog instead of cycling status
+                if (appointment.isPending()) {
+                    showApprovalDialog(appointment);
+                } else {
+                    // Toggle status
+                    String newStatus = appointment.isScheduled() ? Constants.STATUS_COMPLETED : Constants.STATUS_SCHEDULED;
+                    appointmentDAO.updateAppointmentStatus(appointment.getId(), newStatus);
+                    appointment.setStatus(newStatus);
+                    appointmentAdapter.notifyDataSetChanged();
+                    Toast.makeText(PatientDetailsActivity.this, "Status updated", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onEditClick(Appointment appointment) {
+                Intent intent = new Intent(PatientDetailsActivity.this, AddAppointmentActivity.class);
+                intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appointment.getId());
+                intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
+                formLauncher.launch(intent);
+            }
+
+            @Override
+            public void onDeleteClick(Appointment appointment) {
+                showDeleteAppointmentDialog(appointment);
+            }
+        });
     }
 
     private void loadPatientData() {
@@ -211,9 +257,99 @@ public class PatientDetailsActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void showDeleteAppointmentDialog(final Appointment appointment) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.delete_appointment)
+                .setMessage(R.string.delete_appointment_message)
+                .setPositiveButton(R.string.delete, (dialog, which) -> deleteAppointment(appointment))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void deleteAppointment(Appointment appointment) {
+        int result = appointmentDAO.deleteAppointment(appointment.getId());
+        if (result > 0) {
+            loadAppointments();
+            Toast.makeText(this, "Appointment deleted", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, R.string.error_occurred, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void deleteConsultation(Consultation consultation) {
         // Implement delete in ConsultationDAO
         Toast.makeText(this, "Consultation deleted", Toast.LENGTH_SHORT).show();
         loadConsultations();
+    }
+
+    private void showApprovalDialog(Appointment appointment) {
+        String[] options = {
+                getString(R.string.approve_appointment),
+                getString(R.string.modify_and_approve),
+                getString(R.string.reject_appointment)
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.pending_appointment_request)
+                .setMessage(getString(R.string.appointment_request_details,
+                        appointment.getPatientName(),
+                        appointment.getAppointmentDate(),
+                        appointment.getAppointmentTime(),
+                        appointment.getReason()))
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Approve
+                            approveAppointment(appointment);
+                            break;
+                        case 1: // Modify and approve
+                            Intent intent = new Intent(PatientDetailsActivity.this, AddAppointmentActivity.class);
+                            intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appointment.getId());
+                            intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
+                            formLauncher.launch(intent);
+                            break;
+                        case 2: // Reject
+                            showRejectConfirmationDialog(appointment);
+                            break;
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void approveAppointment(Appointment appointment) {
+        int result = appointmentDAO.updateAppointmentStatus(appointment.getId(), Constants.STATUS_SCHEDULED);
+        if (result > 0) {
+            Toast.makeText(this, R.string.appointment_approved, Toast.LENGTH_SHORT).show();
+            // Notify patient about approval
+            NotificationHelper.notifyPatientAppointmentApproved(this,
+                    appointment.getAppointmentDate(), appointment.getAppointmentTime());
+            loadAppointments();
+        } else {
+            Toast.makeText(this, R.string.error_occurred, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showRejectConfirmationDialog(Appointment appointment) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.reject_appointment)
+                .setMessage(R.string.reject_appointment_message)
+                .setPositiveButton(R.string.reject, (dialog, which) -> {
+                    rejectAppointment(appointment);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void rejectAppointment(Appointment appointment) {
+        int result = appointmentDAO.deleteAppointment(appointment.getId());
+        if (result > 0) {
+            Toast.makeText(this, R.string.appointment_rejected, Toast.LENGTH_SHORT).show();
+            // Notify patient about rejection
+            NotificationHelper.notifyPatientAppointmentRejected(this,
+                    appointment.getAppointmentDate(), appointment.getAppointmentTime());
+            loadAppointments();
+        } else {
+            Toast.makeText(this, R.string.error_occurred, Toast.LENGTH_SHORT).show();
+        }
     }
 }

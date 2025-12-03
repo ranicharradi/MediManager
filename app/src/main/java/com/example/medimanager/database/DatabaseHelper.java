@@ -176,25 +176,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 KEY_DOCTOR_ID + ", " + KEY_USER_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "(1, 2, 'Sarra', 'Mejri', '1995-03-20', 'Female', '+216 98 111 222', 'patient@medimanager.tn', 'A+', '2025-11-10')");
+                "(1, 2, 'Sarra', 'Mejri', '1995-03-20', 'Female', '+216 98111222', 'patient@medimanager.tn', 'A+', '2025-11-10')");
 
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
                 KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "(1, 'Mohamed', 'Ben Ali', '1978-08-22', 'Male', '+216 55 987 654', 'mohamed.benali@email.tn', 'O+', '2025-11-12')");
+                "(1, 'Mohamed', 'Ben Ali', '1978-08-22', 'Male', '+216 55987654', 'mohamed.benali@email.tn', 'O+', '2025-11-12')");
 
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
                 KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "(1, 'Amira', 'Jaziri', '1997-03-08', 'Female', '+216 98 765 432', 'amira.jaziri@email.tn', 'B+', '2025-11-08')");
+                "(1, 'Amira', 'Jaziri', '1997-03-08', 'Female', '+216 98765432', 'amira.jaziri@email.tn', 'B+', '2025-11-08')");
 
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
                 KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "(1, 'Ahmed', 'Gharbi', '1973-11-30', 'Male', '+216 22 333 444', 'ahmed.gharbi@email.tn', 'AB+', '2025-11-09')");
+                "(1, 'Ahmed', 'Gharbi', '1973-11-30', 'Male', '+216 22333444', 'ahmed.gharbi@email.tn', 'AB+', '2025-11-09')");
 
         // Insert sample appointments (all belong to doctor id=1)
         db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
@@ -205,7 +205,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
                 KEY_PATIENT_ID + ", " + KEY_DOCTOR_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
                 KEY_REASON + ", " + KEY_STATUS + ") VALUES " +
-                "(2, 1, '2025-11-12', '10:30 AM', 'Suivi', 'in_progress')");
+                "(2, 1, '2025-11-12', '10:30 AM', 'Suivi', 'scheduled')");
 
         db.execSQL("INSERT INTO " + TABLE_APPOINTMENTS + " (" +
                 KEY_PATIENT_ID + ", " + KEY_DOCTOR_ID + ", " + KEY_APPOINTMENT_DATE + ", " + KEY_APPOINTMENT_TIME + ", " +
@@ -225,7 +225,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 KEY_USER_FIRST_NAME + ", " + KEY_USER_LAST_NAME + ", " +
                 KEY_USER_EMAIL + ", " + KEY_USER_PASSWORD + ", " +
                 KEY_USER_ROLE + ", " + KEY_USER_PHONE + ") VALUES " +
-                "('Amine', 'Ben Amor', 'doctor@medimanager.tn', 'doctor123', 'doctor', '+216 71 123 456')");
+                "('Amine', 'Ben Amor', 'doctor@medimanager.tn', 'doctor123', 'doctor', '+216 71123456')");
 
         // Insert sample patient account
         // Email: patient@medimanager.tn | Password: patient123
@@ -233,6 +233,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 KEY_USER_FIRST_NAME + ", " + KEY_USER_LAST_NAME + ", " +
                 KEY_USER_EMAIL + ", " + KEY_USER_PASSWORD + ", " +
                 KEY_USER_ROLE + ", " + KEY_USER_PHONE + ") VALUES " +
-                "('Sarra', 'Mejri', 'patient@medimanager.tn', 'patient123', 'patient', '+216 98 111 222')");
+                "('Sarra', 'Mejri', 'patient@medimanager.tn', 'patient123', 'patient', '+216 98111222')");
     }
 }

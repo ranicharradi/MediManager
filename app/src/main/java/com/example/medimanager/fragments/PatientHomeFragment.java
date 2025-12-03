@@ -1,18 +1,23 @@
 package com.example.medimanager.fragments;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.medimanager.R;
 import com.example.medimanager.adapters.AppointmentAdapter;
 import com.example.medimanager.adapters.ConsultationAdapter;
 import com.example.medimanager.database.AppointmentDAO;
@@ -23,9 +28,11 @@ import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Consultation;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.NotificationHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +51,7 @@ public class PatientHomeFragment extends Fragment {
     private List<Consultation> recentConsultations;
 
     private long patientId = -1;
+    private int doctorId = -1;
     private String patientName = "";
 
     @Nullable
@@ -84,6 +92,7 @@ public class PatientHomeFragment extends Fragment {
             Patient patient = patientDAO.getPatientByUserId((int) userId);
             if (patient != null) {
                 patientId = patient.getId();
+                doctorId = patient.getDoctorId(); // Get the assigned doctor
             }
         }
 
@@ -95,6 +104,7 @@ public class PatientHomeFragment extends Fragment {
         upcomingAppointments = new ArrayList<>();
         appointmentAdapter = new AppointmentAdapter(requireContext(), upcomingAppointments);
         appointmentAdapter.setReadOnly(true); // Patients cannot edit appointments
+        appointmentAdapter.setShowDoctorName(true); // Show doctor name instead of patient name
         binding.rvUpcomingAppointments.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvUpcomingAppointments.setAdapter(appointmentAdapter);
         binding.rvUpcomingAppointments.setNestedScrollingEnabled(false);
@@ -114,6 +124,16 @@ public class PatientHomeFragment extends Fragment {
             public void onStatusClick(Appointment appointment) {
                 // Patients cannot change appointment status
                 Toast.makeText(requireContext(), "Contact your doctor to change status", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onEditClick(Appointment appointment) {
+                // Patients cannot edit appointments
+            }
+
+            @Override
+            public void onDeleteClick(Appointment appointment) {
+                // Patients cannot delete appointments
             }
         });
 
@@ -144,8 +164,105 @@ public class PatientHomeFragment extends Fragment {
 
     private void setupClickListeners() {
         binding.btnBookAppointment.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Please contact the clinic to book an appointment", Toast.LENGTH_SHORT).show();
+            if (patientId == -1) {
+                Toast.makeText(requireContext(), "No patient record linked to your account", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (doctorId == -1) {
+                Toast.makeText(requireContext(), "No doctor assigned to you yet", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            showRequestAppointmentDialog();
         });
+    }
+
+    private void showRequestAppointmentDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_request_appointment, null);
+        
+        EditText etPreferredDate = dialogView.findViewById(R.id.etPreferredDate);
+        EditText etPreferredTime = dialogView.findViewById(R.id.etPreferredTime);
+        EditText etReason = dialogView.findViewById(R.id.etReason);
+        EditText etNotes = dialogView.findViewById(R.id.etNotes);
+
+        // Set default date to tomorrow
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT, Locale.getDefault());
+        etPreferredDate.setText(dateFormat.format(calendar.getTime()));
+
+        // Set default time
+        etPreferredTime.setText("09:00 AM");
+
+        // Date picker
+        etPreferredDate.setOnClickListener(v -> {
+            Calendar cal = Calendar.getInstance();
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    requireContext(),
+                    (view, year, month, dayOfMonth) -> {
+                        Calendar selectedDate = Calendar.getInstance();
+                        selectedDate.set(year, month, dayOfMonth);
+                        etPreferredDate.setText(dateFormat.format(selectedDate.getTime()));
+                    },
+                    cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)
+            );
+            datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+            datePickerDialog.show();
+        });
+
+        // Time picker
+        etPreferredTime.setOnClickListener(v -> {
+            TimePickerDialog timePickerDialog = new TimePickerDialog(
+                    requireContext(),
+                    (view, hourOfDay, minute) -> {
+                        String amPm = hourOfDay >= 12 ? "PM" : "AM";
+                        int displayHour = hourOfDay % 12;
+                        if (displayHour == 0) displayHour = 12;
+                        String timeString = String.format(Locale.getDefault(), "%02d:%02d %s", displayHour, minute, amPm);
+                        etPreferredTime.setText(timeString);
+                    },
+                    9, 0, false
+            );
+            timePickerDialog.show();
+        });
+
+        new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .setPositiveButton(R.string.request_appointment, (dialog, which) -> {
+                    String date = etPreferredDate.getText().toString().trim();
+                    String time = etPreferredTime.getText().toString().trim();
+                    String reason = etReason.getText().toString().trim();
+                    String notes = etNotes.getText().toString().trim();
+
+                    if (date.isEmpty() || time.isEmpty() || reason.isEmpty()) {
+                        Toast.makeText(requireContext(), "Please fill in all required fields", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    submitAppointmentRequest(date, time, reason, notes);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void submitAppointmentRequest(String date, String time, String reason, String notes) {
+        Appointment appointment = new Appointment();
+        appointment.setPatientId((int) patientId);
+        appointment.setDoctorId(doctorId);
+        appointment.setAppointmentDate(date);
+        appointment.setAppointmentTime(time);
+        appointment.setReason(reason);
+        appointment.setNotes(notes);
+        appointment.setStatus(Constants.STATUS_PENDING); // Pending approval
+
+        long id = appointmentDAO.insertAppointment(appointment);
+        if (id > 0) {
+            Toast.makeText(requireContext(), R.string.appointment_request_sent, Toast.LENGTH_SHORT).show();
+            // Notify doctor about new request
+            NotificationHelper.notifyDoctorNewRequest(requireContext(), patientName, date, time, reason);
+            loadPatientData(); // Refresh the list
+        } else {
+            Toast.makeText(requireContext(), R.string.error_occurred, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void loadPatientData() {
@@ -162,9 +279,9 @@ public class PatientHomeFragment extends Fragment {
         List<Appointment> appointments = appointmentDAO.getAppointmentsByPatient((int) patientId);
         upcomingAppointments.clear();
 
-        // Filter to only show upcoming (scheduled) appointments
+        // Filter to only show upcoming (scheduled or pending) appointments
         for (Appointment apt : appointments) {
-            if (apt.isScheduled() || apt.isInProgress()) {
+            if (apt.isScheduled() || apt.isPending()) {
                 upcomingAppointments.add(apt);
             }
         }

@@ -35,7 +35,7 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
                 android:ellipsize="end"
-                android:maxLines="1"/>
+                android:maxLines="1" />
 
             <TextView
                 android:id="@+id/tvTime"
@@ -45,7 +45,37 @@
                 android:textSize="14sp"
                 android:textColor="@color/text_secondary"
                 android:textStyle="bold"
-                android:layout_marginStart="8dp"/>
+                android:layout_marginStart="8dp" />
+
+            <!-- Action Buttons (visible only for doctors) -->
+            <LinearLayout
+                android:id="@+id/layoutActions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="8dp"
+                android:visibility="gone">
+
+                <ImageButton
+                    android:id="@+id/btnEdit"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/edit_appointment"
+                    android:padding="4dp"
+                    app:tint="@color/primary" />
+
+                <ImageButton
+                    android:id="@+id/btnDelete"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@android:drawable/ic_menu_delete"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/delete_appointment"
+                    android:padding="4dp"
+                    app:tint="@color/error" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Reason -->
@@ -56,7 +86,7 @@
             android:text="Check-up"
             android:textSize="14sp"
             android:textColor="@color/text_secondary"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp" />
 
         <!-- Status Badge -->
         <TextView
@@ -73,7 +103,7 @@
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

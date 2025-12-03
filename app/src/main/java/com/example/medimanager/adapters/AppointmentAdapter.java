@@ -3,6 +3,7 @@ package com.example.medimanager.adapters;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -20,11 +21,14 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
     private List<Appointment> appointmentList;
     private OnItemClickListener listener;
     private boolean readOnly = false;
+    private boolean showDoctorName = false;
 
     // Interface for click listeners
     public interface OnItemClickListener {
         void onItemClick(Appointment appointment);
         void onStatusClick(Appointment appointment);
+        void onEditClick(Appointment appointment);
+        void onDeleteClick(Appointment appointment);
     }
 
     public AppointmentAdapter(Context context, List<Appointment> appointmentList) {
@@ -38,6 +42,11 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+        notifyDataSetChanged();
+    }
+
+    public void setShowDoctorName(boolean showDoctorName) {
+        this.showDoctorName = showDoctorName;
         notifyDataSetChanged();
     }
 
@@ -81,11 +90,21 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
         }
 
         public void bind(final Appointment appointment) {
-            // Set patient name
-            if (appointment.getPatientName() != null && !appointment.getPatientName().isEmpty()) {
-                binding.tvPatientName.setText(appointment.getPatientName());
+            // Set name based on mode - show doctor name for patients, patient name for doctors
+            if (showDoctorName) {
+                // Patient portal - show doctor name with "Dr." prefix
+                if (appointment.getDoctorName() != null && !appointment.getDoctorName().isEmpty()) {
+                    binding.tvPatientName.setText("Dr. " + appointment.getDoctorName());
+                } else {
+                    binding.tvPatientName.setText("Unknown Doctor");
+                }
             } else {
-                binding.tvPatientName.setText("Unknown Patient");
+                // Doctor portal - show patient name
+                if (appointment.getPatientName() != null && !appointment.getPatientName().isEmpty()) {
+                    binding.tvPatientName.setText(appointment.getPatientName());
+                } else {
+                    binding.tvPatientName.setText("Unknown Patient");
+                }
             }
 
             // Set appointment time
@@ -109,6 +128,9 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
             // Set status background color and text color based on status
             if (appointment.isCompleted()) {
                 binding.tvStatus.setBackgroundResource(R.drawable.bg_status_completed);
+                binding.tvStatus.setTextColor(Color.WHITE);
+            } else if (appointment.isPending()) {
+                binding.tvStatus.setBackgroundResource(R.drawable.bg_status_pending);
                 binding.tvStatus.setTextColor(Color.WHITE);
             } else if (appointment.isInProgress()) {
                 binding.tvStatus.setBackgroundResource(R.drawable.bg_status_in_progress);
@@ -139,6 +161,23 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
             } else {
                 binding.tvStatus.setOnClickListener(null);
                 binding.tvStatus.setClickable(false);
+            }
+
+            // Show/hide action buttons based on read-only mode
+            if (!readOnly) {
+                binding.layoutActions.setVisibility(View.VISIBLE);
+                binding.btnEdit.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onEditClick(appointment);
+                    }
+                });
+                binding.btnDelete.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onDeleteClick(appointment);
+                    }
+                });
+            } else {
+                binding.layoutActions.setVisibility(View.GONE);
             }
 
             // Optional: Make the card clickable with ripple effect

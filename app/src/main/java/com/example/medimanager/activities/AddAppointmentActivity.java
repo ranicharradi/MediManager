@@ -17,11 +17,14 @@ import com.example.medimanager.AppointmentNotificationReceiver;
 import com.example.medimanager.R;
 import com.example.medimanager.database.AppointmentDAO;
 import com.example.medimanager.database.PatientDAO;
+import com.example.medimanager.database.UserDAO;
 import com.example.medimanager.databinding.ActivityAddAppointmentBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.DateUtils;
+import com.example.medimanager.utils.NotificationHelper;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -92,10 +95,9 @@ public class AddAppointmentActivity extends AppCompatActivity {
         // Load patients
         loadPatients();
 
-        // Status Spinner
+        // Status Spinner (In Progress removed - status cycles from Scheduled to Completed)
         String[] statuses = {
                 "Scheduled",
-                "In Progress",
                 "Completed",
                 "Cancelled"
         };
@@ -270,9 +272,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
         // Convert status display name to database value
         String statusDisplay = binding.spinnerStatus.getText().toString();
         String status = Constants.STATUS_SCHEDULED;
-        if (statusDisplay.equals("In Progress")) {
-            status = Constants.STATUS_IN_PROGRESS;
-        } else if (statusDisplay.equals("Completed")) {
+        if (statusDisplay.equals("Completed")) {
             status = Constants.STATUS_COMPLETED;
         } else if (statusDisplay.equals("Cancelled")) {
             status = Constants.STATUS_CANCELLED;
@@ -303,6 +303,18 @@ public class AddAppointmentActivity extends AppCompatActivity {
 
                 // Schedule notification (1 hour before)
                 scheduleNotification(currentAppointment);
+
+                // Notify patient about the new appointment
+                UserDAO userDAO = new UserDAO(this);
+                User doctor = userDAO.getUserById(doctorId);
+                String doctorName = doctor != null ? doctor.getLastName() : "Your doctor";
+                NotificationHelper.notifyPatientNewAppointment(
+                        this,
+                        doctorName,
+                        currentAppointment.getAppointmentDate(),
+                        currentAppointment.getAppointmentTime(),
+                        currentAppointment.getReason()
+                );
 
                 setResult(RESULT_OK);
                 finish();

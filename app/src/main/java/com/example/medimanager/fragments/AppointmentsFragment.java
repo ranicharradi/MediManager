@@ -13,6 +13,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -26,6 +27,7 @@ import com.example.medimanager.databinding.FragmentAppointmentsBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.NotificationHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,16 +105,22 @@ public class AppointmentsFragment extends Fragment {
             @Override
             public void onItemClick(Appointment appointment) {
                 if (isDoctor) {
-                    // Doctors can open patient details
-                    Intent intent = new Intent(requireContext(), PatientDetailsActivity.class);
-                    intent.putExtra(Constants.EXTRA_PATIENT_ID, appointment.getPatientId());
-                    startActivity(intent);
+                    // If pending, show approval dialog
+                    if (appointment.isPending()) {
+                        showApprovalDialog(appointment);
+                    } else {
+                        // Doctors can open patient details
+                        Intent intent = new Intent(requireContext(), PatientDetailsActivity.class);
+                        intent.putExtra(Constants.EXTRA_PATIENT_ID, appointment.getPatientId());
+                        startActivity(intent);
+                    }
                 } else {
                     // Patients can only view appointment info
+                    String statusText = appointment.isPending() ? "Pending doctor approval" : appointment.getStatusDisplayName();
                     String info = "Appointment: " + appointment.getReason() + "\n" +
                             "Date: " + appointment.getAppointmentDate() + "\n" +
                             "Time: " + appointment.getAppointmentTime() + "\n" +
-                            "Status: " + appointment.getStatusDisplayName();
+                            "Status: " + statusText;
                     Toast.makeText(requireContext(), info, Toast.LENGTH_LONG).show();
                 }
             }
@@ -123,12 +131,39 @@ public class AppointmentsFragment extends Fragment {
                     Toast.makeText(requireContext(), "Only doctors can update status", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                updateAppointmentStatus(appointment);
+                // If pending, show approval dialog instead of cycling status
+                if (appointment.isPending()) {
+                    showApprovalDialog(appointment);
+                } else {
+                    updateAppointmentStatus(appointment);
+                }
+            }
+
+            @Override
+            public void onEditClick(Appointment appointment) {
+                if (!isDoctor) {
+                    return;
+                }
+                // Open AddAppointmentActivity in edit mode
+                Intent intent = new Intent(requireContext(), AddAppointmentActivity.class);
+                intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appointment.getId());
+                intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
+                addAppointmentLauncher.launch(intent);
+            }
+
+            @Override
+            public void onDeleteClick(Appointment appointment) {
+                if (!isDoctor) {
+                    return;
+                }
+                showDeleteConfirmationDialog(appointment);
             }
         });
 
         // Set read-only mode for patients (hides status click indicator)
         appointmentAdapter.setReadOnly(!isDoctor);
+        // Show doctor name for patients, patient name for doctors
+        appointmentAdapter.setShowDoctorName(!isDoctor);
     }
 
     private void setupFilterChips() {
@@ -143,8 +178,8 @@ public class AppointmentsFragment extends Fragment {
                 currentFilter = "all";
             } else if (checkedId == R.id.chipScheduled) {
                 currentFilter = Constants.STATUS_SCHEDULED;
-            } else if (checkedId == R.id.chipInProgress) {
-                currentFilter = Constants.STATUS_IN_PROGRESS;
+            } else if (checkedId == R.id.chipPending) {
+                currentFilter = Constants.STATUS_PENDING;
             } else if (checkedId == R.id.chipCompleted) {
                 currentFilter = Constants.STATUS_COMPLETED;
             }
@@ -207,10 +242,9 @@ public class AppointmentsFragment extends Fragment {
             return;
         }
 
+        // Cycle status: Scheduled -> Completed -> Scheduled
         String newStatus;
         if (appointment.isScheduled()) {
-            newStatus = Constants.STATUS_IN_PROGRESS;
-        } else if (appointment.isInProgress()) {
             newStatus = Constants.STATUS_COMPLETED;
         } else {
             newStatus = Constants.STATUS_SCHEDULED;
@@ -222,6 +256,98 @@ public class AppointmentsFragment extends Fragment {
             appointment.setStatus(newStatus);
             appointmentAdapter.notifyDataSetChanged();
             Toast.makeText(requireContext(), "Status updated", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showDeleteConfirmationDialog(Appointment appointment) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.delete_appointment)
+                .setMessage(R.string.delete_appointment_message)
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
+                    deleteAppointment(appointment);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void showApprovalDialog(Appointment appointment) {
+        String[] options = {
+                getString(R.string.approve_appointment),
+                getString(R.string.modify_and_approve),
+                getString(R.string.reject_appointment)
+        };
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.pending_appointment_request)
+                .setMessage(getString(R.string.appointment_request_details,
+                        appointment.getPatientName(),
+                        appointment.getAppointmentDate(),
+                        appointment.getAppointmentTime(),
+                        appointment.getReason()))
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Approve
+                            approveAppointment(appointment);
+                            break;
+                        case 1: // Modify and approve
+                            Intent intent = new Intent(requireContext(), AddAppointmentActivity.class);
+                            intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appointment.getId());
+                            intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
+                            addAppointmentLauncher.launch(intent);
+                            break;
+                        case 2: // Reject
+                            showRejectConfirmationDialog(appointment);
+                            break;
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void approveAppointment(Appointment appointment) {
+        int result = appointmentDAO.updateAppointmentStatus(appointment.getId(), Constants.STATUS_SCHEDULED);
+        if (result > 0) {
+            Toast.makeText(requireContext(), R.string.appointment_approved, Toast.LENGTH_SHORT).show();
+            // Notify patient about approval
+            NotificationHelper.notifyPatientAppointmentApproved(requireContext(), 
+                    appointment.getAppointmentDate(), appointment.getAppointmentTime());
+            loadAppointments();
+        } else {
+            Toast.makeText(requireContext(), R.string.error_occurred, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showRejectConfirmationDialog(Appointment appointment) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.reject_appointment)
+                .setMessage(R.string.reject_appointment_message)
+                .setPositiveButton(R.string.reject, (dialog, which) -> {
+                    rejectAppointment(appointment);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void rejectAppointment(Appointment appointment) {
+        int result = appointmentDAO.deleteAppointment(appointment.getId());
+        if (result > 0) {
+            Toast.makeText(requireContext(), R.string.appointment_rejected, Toast.LENGTH_SHORT).show();
+            // Notify patient about rejection
+            NotificationHelper.notifyPatientAppointmentRejected(requireContext(),
+                    appointment.getAppointmentDate(), appointment.getAppointmentTime());
+            loadAppointments();
+        } else {
+            Toast.makeText(requireContext(), R.string.error_occurred, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void deleteAppointment(Appointment appointment) {
+        int result = appointmentDAO.deleteAppointment(appointment.getId());
+        if (result > 0) {
+            loadAppointments();
+            Toast.makeText(requireContext(), "Appointment deleted", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(requireContext(), R.string.error_occurred, Toast.LENGTH_SHORT).show();
         }
     }
 

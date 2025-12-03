@@ -10,6 +10,7 @@
     <color name="accent_light">#81C784</color>
 
     <!-- Status Colors -->
+    <color name="status_pending">#9C27B0</color>
     <color name="status_completed">#4CAF50</color>
     <color name="status_in_progress">#2196F3</color>
     <color name="status_scheduled">#FF9800</color>

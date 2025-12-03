@@ -20,6 +20,7 @@ import com.example.medimanager.fragments.PatientHomeFragment;
 import com.example.medimanager.fragments.PatientsFragment;
 import com.example.medimanager.fragments.ProfileFragment;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.NotificationHelper;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
         // Check user role
         SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
         isDoctor = prefs.getBoolean(Constants.PREF_IS_DOCTOR, true);
+
+        // Create notification channels
+        NotificationHelper.createNotificationChannels(this);
 
         // Setup navigation based on role
         setupNavigation();

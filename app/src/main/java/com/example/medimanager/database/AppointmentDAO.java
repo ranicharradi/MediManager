@@ -36,10 +36,14 @@ public class AppointmentDAO {
     public Appointment getAppointmentById(int id) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
-                DatabaseHelper.KEY_LAST_NAME + " as patient_name FROM " +
+                DatabaseHelper.KEY_LAST_NAME + " as patient_name, " +
+                "u." + DatabaseHelper.KEY_USER_FIRST_NAME + " || ' ' || u." +
+                DatabaseHelper.KEY_USER_LAST_NAME + " as doctor_name FROM " +
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
+                " LEFT JOIN " + DatabaseHelper.TABLE_USERS + " u ON a." +
+                DatabaseHelper.KEY_DOCTOR_ID + " = u." + DatabaseHelper.KEY_ID +
                 " WHERE a." + DatabaseHelper.KEY_ID + " = ?";
 
         Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(id)});
@@ -63,10 +67,14 @@ public class AppointmentDAO {
         List<Appointment> appointments = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
-                DatabaseHelper.KEY_LAST_NAME + " as patient_name FROM " +
+                DatabaseHelper.KEY_LAST_NAME + " as patient_name, " +
+                "u." + DatabaseHelper.KEY_USER_FIRST_NAME + " || ' ' || u." +
+                DatabaseHelper.KEY_USER_LAST_NAME + " as doctor_name FROM " +
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
+                " LEFT JOIN " + DatabaseHelper.TABLE_USERS + " u ON a." +
+                DatabaseHelper.KEY_DOCTOR_ID + " = u." + DatabaseHelper.KEY_ID +
                 " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC, a." +
                 DatabaseHelper.KEY_APPOINTMENT_TIME + " DESC";
@@ -93,10 +101,14 @@ public class AppointmentDAO {
         List<Appointment> appointments = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
-                DatabaseHelper.KEY_LAST_NAME + " as patient_name FROM " +
+                DatabaseHelper.KEY_LAST_NAME + " as patient_name, " +
+                "u." + DatabaseHelper.KEY_USER_FIRST_NAME + " || ' ' || u." +
+                DatabaseHelper.KEY_USER_LAST_NAME + " as doctor_name FROM " +
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
+                " LEFT JOIN " + DatabaseHelper.TABLE_USERS + " u ON a." +
+                DatabaseHelper.KEY_DOCTOR_ID + " = u." + DatabaseHelper.KEY_ID +
                 " WHERE a." + DatabaseHelper.KEY_PATIENT_ID + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC";
 
@@ -122,10 +134,14 @@ public class AppointmentDAO {
         List<Appointment> appointments = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
-                DatabaseHelper.KEY_LAST_NAME + " as patient_name FROM " +
+                DatabaseHelper.KEY_LAST_NAME + " as patient_name, " +
+                "u." + DatabaseHelper.KEY_USER_FIRST_NAME + " || ' ' || u." +
+                DatabaseHelper.KEY_USER_LAST_NAME + " as doctor_name FROM " +
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
+                " LEFT JOIN " + DatabaseHelper.TABLE_USERS + " u ON a." +
+                DatabaseHelper.KEY_DOCTOR_ID + " = u." + DatabaseHelper.KEY_ID +
                 " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_TIME + " ASC";
 
@@ -151,10 +167,14 @@ public class AppointmentDAO {
         List<Appointment> appointments = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         String query = "SELECT a.*, p." + DatabaseHelper.KEY_FIRST_NAME + " || ' ' || p." +
-                DatabaseHelper.KEY_LAST_NAME + " as patient_name FROM " +
+                DatabaseHelper.KEY_LAST_NAME + " as patient_name, " +
+                "u." + DatabaseHelper.KEY_USER_FIRST_NAME + " || ' ' || u." +
+                DatabaseHelper.KEY_USER_LAST_NAME + " as doctor_name FROM " +
                 DatabaseHelper.TABLE_APPOINTMENTS + " a " +
                 "LEFT JOIN " + DatabaseHelper.TABLE_PATIENTS + " p ON a." +
                 DatabaseHelper.KEY_PATIENT_ID + " = p." + DatabaseHelper.KEY_ID +
+                " LEFT JOIN " + DatabaseHelper.TABLE_USERS + " u ON a." +
+                DatabaseHelper.KEY_DOCTOR_ID + " = u." + DatabaseHelper.KEY_ID +
                 " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND a." + DatabaseHelper.KEY_STATUS + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC";
 
@@ -285,6 +305,12 @@ public class AppointmentDAO {
         int nameIndex = cursor.getColumnIndex("patient_name");
         if (nameIndex != -1) {
             appointment.setPatientName(cursor.getString(nameIndex));
+        }
+
+        // Get doctor name from JOIN
+        int doctorNameIndex = cursor.getColumnIndex("doctor_name");
+        if (doctorNameIndex != -1) {
+            appointment.setDoctorName(cursor.getString(doctorNameIndex));
         }
 
         return appointment;

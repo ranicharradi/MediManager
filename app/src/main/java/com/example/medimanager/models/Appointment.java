@@ -7,6 +7,7 @@ public class Appointment implements Serializable {
     private int patientId;
     private int doctorId;
     private String patientName;
+    private String doctorName;
     private String appointmentDate;
     private String appointmentTime;
     private String reason;
@@ -18,13 +19,14 @@ public class Appointment implements Serializable {
     public Appointment() {
     }
 
-    public Appointment(int id, int patientId, int doctorId, String patientName, String appointmentDate,
+    public Appointment(int id, int patientId, int doctorId, String patientName, String doctorName, String appointmentDate,
                        String appointmentTime, String reason, String status,
                        String notes, String createdAt) {
         this.id = id;
         this.patientId = patientId;
         this.doctorId = doctorId;
         this.patientName = patientName;
+        this.doctorName = doctorName;
         this.appointmentDate = appointmentDate;
         this.appointmentTime = appointmentTime;
         this.reason = reason;
@@ -64,6 +66,14 @@ public class Appointment implements Serializable {
 
     public void setPatientName(String patientName) {
         this.patientName = patientName;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
     }
 
     public String getAppointmentDate() {
@@ -115,6 +125,10 @@ public class Appointment implements Serializable {
     }
 
     // Helper Methods
+    public boolean isPending() {
+        return "pending".equalsIgnoreCase(status);
+    }
+
     public boolean isScheduled() {
         return "scheduled".equalsIgnoreCase(status);
     }
@@ -135,6 +149,8 @@ public class Appointment implements Serializable {
         if (status == null) return "Scheduled";
 
         switch (status.toLowerCase()) {
+            case "pending":
+                return "Pending";
             case "in_progress":
                 return "In Progress";
             case "completed":

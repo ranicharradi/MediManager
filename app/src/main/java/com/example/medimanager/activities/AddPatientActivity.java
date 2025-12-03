@@ -167,7 +167,8 @@ public class AddPatientActivity extends AppCompatActivity {
         }
 
         // Validate phone (optional but check format if provided)
-        if (!phone.isEmpty() && phone.length() < 10) {
+        // Tunisian phone numbers are 8 digits (without +216 prefix)
+        if (!phone.isEmpty() && phone.length() < 8) {
             binding.etPhone.setError(getString(R.string.invalid_phone));
             binding.etPhone.requestFocus();
             return false;
