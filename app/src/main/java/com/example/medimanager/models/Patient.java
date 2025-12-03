@@ -10,6 +10,7 @@ import java.util.Locale;
 public class Patient implements Serializable {
     private int id;
     private int doctorId;
+    private Integer userId; // Links to user account (nullable for patients without accounts)
     private String firstName;
     private String lastName;
     private String dateOfBirth;
@@ -26,11 +27,12 @@ public class Patient implements Serializable {
     public Patient() {
     }
 
-    public Patient(int id, int doctorId, String firstName, String lastName, String dateOfBirth,
+    public Patient(int id, int doctorId, Integer userId, String firstName, String lastName, String dateOfBirth,
                    String gender, String phone, String email, String address,
                    String bloodGroup, String allergies, String lastVisit, String createdAt) {
         this.id = id;
         this.doctorId = doctorId;
+        this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.dateOfBirth = dateOfBirth;
@@ -59,6 +61,14 @@ public class Patient implements Serializable {
 
     public void setDoctorId(int doctorId) {
         this.doctorId = doctorId;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getFirstName() {

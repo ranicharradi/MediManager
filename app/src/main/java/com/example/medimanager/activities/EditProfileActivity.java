@@ -6,12 +6,18 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.medimanager.R;
+import com.example.medimanager.database.UserDAO;
 import com.example.medimanager.databinding.ActivityEditProfileBinding;
+import com.example.medimanager.models.User;
+import com.example.medimanager.utils.Constants;
 
 public class EditProfileActivity extends AppCompatActivity {
 
     private ActivityEditProfileBinding binding;
     private SharedPreferences sharedPreferences;
+    private UserDAO userDAO;
+    private User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +25,8 @@ public class EditProfileActivity extends AppCompatActivity {
         binding = ActivityEditProfileBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        sharedPreferences = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
+        userDAO = new UserDAO(this);
 
         setupToolbar();
         loadUserData();
@@ -31,30 +38,62 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void loadUserData() {
-        String name = sharedPreferences.getString("name", "Dr. Ben Amor");
-        String email = sharedPreferences.getString("email", "dr.benamor@medimanager.tn");
+        String email = sharedPreferences.getString(Constants.PREF_USER_EMAIL, "");
+        currentUser = userDAO.getUserByEmail(email);
 
-        binding.etName.setText(name);
-        binding.etEmail.setText(email);
+        if (currentUser != null) {
+            binding.etFirstName.setText(currentUser.getFirstName());
+            binding.etLastName.setText(currentUser.getLastName());
+            binding.etEmail.setText(currentUser.getEmail());
+            
+            // Strip +216 prefix for phone display
+            String phone = currentUser.getPhone();
+            if (phone != null && phone.startsWith("+216 ")) {
+                phone = phone.substring(5);
+            }
+            binding.etPhone.setText(phone);
+        }
     }
 
     private void setupListeners() {
         binding.btnSave.setOnClickListener(v -> {
-            String name = binding.etName.getText().toString().trim();
-            String email = binding.etEmail.getText().toString().trim();
-
-            if (name.isEmpty() || email.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            if (currentUser == null) {
+                Toast.makeText(this, R.string.error_occurred, Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString("name", name);
-            editor.putString("email", email);
-            editor.apply();
+            String firstName = binding.etFirstName.getText().toString().trim();
+            String lastName = binding.etLastName.getText().toString().trim();
+            String phone = binding.etPhone.getText().toString().trim();
 
-            Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
-            finish();
+            if (firstName.isEmpty() || lastName.isEmpty()) {
+                Toast.makeText(this, R.string.required_field, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Update user object
+            currentUser.setFirstName(firstName);
+            currentUser.setLastName(lastName);
+            
+            // Prepend +216 prefix to phone
+            String fullPhone = phone.isEmpty() ? "" : "+216 " + phone;
+            currentUser.setPhone(fullPhone);
+
+            // Save to database
+            int result = userDAO.updateUser(currentUser);
+
+            if (result > 0) {
+                // Update stored name in SharedPreferences
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(Constants.PREF_USER_NAME, currentUser.getFullName());
+                editor.apply();
+
+                Toast.makeText(this, R.string.profile_updated, Toast.LENGTH_SHORT).show();
+                setResult(RESULT_OK);
+                finish();
+            } else {
+                Toast.makeText(this, R.string.error_occurred, Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

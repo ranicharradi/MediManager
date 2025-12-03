@@ -9,15 +9,19 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.medimanager.R;
+import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.database.UserDAO;
 import com.example.medimanager.databinding.ActivityRegisterBinding;
+import com.example.medimanager.models.Patient;
 import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.DatabaseExporter;
 
 public class RegisterActivity extends AppCompatActivity {
 
     private ActivityRegisterBinding binding;
     private UserDAO userDAO;
+    private PatientDAO patientDAO;
     private boolean isDoctorSelected = true;
 
     @Override
@@ -27,6 +31,7 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         userDAO = new UserDAO(this);
+        patientDAO = new PatientDAO(this);
 
         setupRoleSelection();
         setupClickListeners();
@@ -127,7 +132,9 @@ public class RegisterActivity extends AppCompatActivity {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
-        user.setPhone(phone);
+        // Prepend +216 prefix to phone number
+        String fullPhone = phone.isEmpty() ? "" : "+216 " + phone;
+        user.setPhone(fullPhone);
         user.setPassword(password);
         user.setRole(isDoctorSelected ? "doctor" : "patient");
 
@@ -142,6 +149,20 @@ public class RegisterActivity extends AppCompatActivity {
 
         // Registration successful - auto login
         Toast.makeText(this, R.string.registration_success, Toast.LENGTH_SHORT).show();
+
+        // Export database after new user registration
+        String roleLabel = isDoctorSelected ? "Doctor" : "Patient";
+        DatabaseExporter.exportDatabase(this, "New " + roleLabel + " Registered: " + firstName + " " + lastName);
+
+        // Auto-link: If registering as patient, check if a patient record exists with this email
+        if (!isDoctorSelected) {
+            Patient existingPatient = patientDAO.getPatientByEmail(email);
+            if (existingPatient != null && existingPatient.getUserId() == null) {
+                // Link the patient record to this new user account
+                existingPatient.setUserId((int) userId);
+                patientDAO.updatePatient(existingPatient);
+            }
+        }
 
         // Save login state
         SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);

@@ -202,6 +202,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_medium"
+            app:prefixText="+216 "
             android:hint="@string/phone">
 
             <com.google.android.material.textfield.TextInputEditText

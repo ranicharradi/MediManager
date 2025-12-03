@@ -102,10 +102,19 @@ public class AppointmentsFragment extends Fragment {
         appointmentAdapter.setOnItemClickListener(new AppointmentAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Appointment appointment) {
-                // Open patient details
-                Intent intent = new Intent(requireContext(), PatientDetailsActivity.class);
-                intent.putExtra(Constants.EXTRA_PATIENT_ID, appointment.getPatientId());
-                startActivity(intent);
+                if (isDoctor) {
+                    // Doctors can open patient details
+                    Intent intent = new Intent(requireContext(), PatientDetailsActivity.class);
+                    intent.putExtra(Constants.EXTRA_PATIENT_ID, appointment.getPatientId());
+                    startActivity(intent);
+                } else {
+                    // Patients can only view appointment info
+                    String info = "Appointment: " + appointment.getReason() + "\n" +
+                            "Date: " + appointment.getAppointmentDate() + "\n" +
+                            "Time: " + appointment.getAppointmentTime() + "\n" +
+                            "Status: " + appointment.getStatusDisplayName();
+                    Toast.makeText(requireContext(), info, Toast.LENGTH_LONG).show();
+                }
             }
 
             @Override
@@ -117,6 +126,9 @@ public class AppointmentsFragment extends Fragment {
                 updateAppointmentStatus(appointment);
             }
         });
+
+        // Set read-only mode for patients (hides status click indicator)
+        appointmentAdapter.setReadOnly(!isDoctor);
     }
 
     private void setupFilterChips() {

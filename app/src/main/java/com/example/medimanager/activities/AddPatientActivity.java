@@ -10,9 +10,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.medimanager.R;
 import com.example.medimanager.database.PatientDAO;
+import com.example.medimanager.database.UserDAO;
 import com.example.medimanager.databinding.ActivityAddPatientBinding;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.DatabaseExporter;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -24,6 +27,7 @@ public class AddPatientActivity extends AppCompatActivity {
 
     // Data
     private PatientDAO patientDAO;
+    private UserDAO userDAO;
     private Patient currentPatient;
     private boolean isEditMode = false;
     private Calendar selectedDate;
@@ -35,8 +39,9 @@ public class AddPatientActivity extends AppCompatActivity {
         binding = ActivityAddPatientBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Initialize DAO
+        // Initialize DAOs
         patientDAO = new PatientDAO(this);
+        userDAO = new UserDAO(this);
         
         // Load doctor id
         SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
@@ -193,11 +198,25 @@ public class AddPatientActivity extends AppCompatActivity {
         currentPatient.setLastName(binding.etLastName.getText().toString().trim());
         currentPatient.setDateOfBirth(binding.etDateOfBirth.getText().toString().trim());
         currentPatient.setGender(binding.spinnerGender.getText().toString());
-        currentPatient.setPhone(binding.etPhone.getText().toString().trim());
+        
+        // Prepend +216 prefix to phone number
+        String phoneInput = binding.etPhone.getText().toString().trim();
+        String fullPhone = phoneInput.isEmpty() ? "" : "+216 " + phoneInput;
+        currentPatient.setPhone(fullPhone);
+        
         currentPatient.setEmail(binding.etEmail.getText().toString().trim());
         currentPatient.setAddress(binding.etAddress.getText().toString().trim());
         currentPatient.setBloodGroup(binding.spinnerBloodGroup.getText().toString());
         currentPatient.setAllergies(binding.etAllergies.getText().toString().trim());
+
+        // Auto-link: Check if a patient user account exists with this email
+        String patientEmail = currentPatient.getEmail();
+        if (patientEmail != null && !patientEmail.isEmpty()) {
+            User existingUser = userDAO.getUserByEmail(patientEmail);
+            if (existingUser != null && "patient".equals(existingUser.getRole())) {
+                currentPatient.setUserId((int) existingUser.getId());
+            }
+        }
 
         if (isEditMode) {
             // Update existing patient
@@ -215,6 +234,9 @@ public class AddPatientActivity extends AppCompatActivity {
             long id = patientDAO.insertPatient(currentPatient);
 
             if (id > 0) {
+                // Export database after adding new patient
+                DatabaseExporter.exportDatabase(this, "New Patient Added: " + currentPatient.getFullName());
+                
                 Toast.makeText(this, R.string.patient_added, Toast.LENGTH_SHORT).show();
                 setResult(RESULT_OK);
                 finish();
@@ -231,7 +253,14 @@ public class AddPatientActivity extends AppCompatActivity {
         binding.etLastName.setText(currentPatient.getLastName());
         binding.etDateOfBirth.setText(currentPatient.getDateOfBirth());
         binding.spinnerGender.setText(currentPatient.getGender(), false);
-        binding.etPhone.setText(currentPatient.getPhone());
+        
+        // Strip +216 prefix for display (it's shown as prefix in the input field)
+        String phone = currentPatient.getPhone();
+        if (phone != null && phone.startsWith("+216 ")) {
+            phone = phone.substring(5); // Remove "+216 "
+        }
+        binding.etPhone.setText(phone);
+        
         binding.etEmail.setText(currentPatient.getEmail());
         binding.etAddress.setText(currentPatient.getAddress());
         binding.spinnerBloodGroup.setText(currentPatient.getBloodGroup(), false);

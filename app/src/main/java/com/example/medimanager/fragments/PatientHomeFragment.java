@@ -76,13 +76,15 @@ public class PatientHomeFragment extends Fragment {
 
     private void loadUserInfo() {
         SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-        String userEmail = prefs.getString(Constants.PREF_USER_EMAIL, "");
+        long userId = prefs.getLong(Constants.PREF_USER_ID, -1);
         patientName = prefs.getString(Constants.PREF_USER_NAME, "Patient");
 
-        // Find the patient record linked to this user email
-        Patient patient = patientDAO.getPatientByEmail(userEmail);
-        if (patient != null) {
-            patientId = patient.getId();
+        // Find the patient record linked to this user account via user_id
+        if (userId != -1) {
+            Patient patient = patientDAO.getPatientByUserId((int) userId);
+            if (patient != null) {
+                patientId = patient.getId();
+            }
         }
 
         binding.tvWelcome.setText("Welcome, " + patientName);
@@ -92,6 +94,7 @@ public class PatientHomeFragment extends Fragment {
         // Upcoming Appointments
         upcomingAppointments = new ArrayList<>();
         appointmentAdapter = new AppointmentAdapter(requireContext(), upcomingAppointments);
+        appointmentAdapter.setReadOnly(true); // Patients cannot edit appointments
         binding.rvUpcomingAppointments.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvUpcomingAppointments.setAdapter(appointmentAdapter);
         binding.rvUpcomingAppointments.setNestedScrollingEnabled(false);
@@ -99,7 +102,12 @@ public class PatientHomeFragment extends Fragment {
         appointmentAdapter.setOnItemClickListener(new AppointmentAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Appointment appointment) {
-                Toast.makeText(requireContext(), "Appointment: " + appointment.getReason(), Toast.LENGTH_SHORT).show();
+                // Show appointment details in a toast (read-only)
+                String info = "Appointment: " + appointment.getReason() + "\n" +
+                        "Date: " + appointment.getAppointmentDate() + "\n" +
+                        "Time: " + appointment.getAppointmentTime() + "\n" +
+                        "Status: " + appointment.getStatusDisplayName();
+                Toast.makeText(requireContext(), info, Toast.LENGTH_LONG).show();
             }
 
             @Override

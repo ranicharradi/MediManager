@@ -10,7 +10,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Database Info
     private static final String DATABASE_NAME = "medimanager.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     // Table Names
     public static final String TABLE_PATIENTS = "patients";
@@ -23,6 +23,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String KEY_CREATED_AT = "created_at";
 
     // Patients Table Columns
+    public static final String KEY_USER_ID = "user_id";
     public static final String KEY_FIRST_NAME = "first_name";
     public static final String KEY_LAST_NAME = "last_name";
     public static final String KEY_DATE_OF_BIRTH = "date_of_birth";
@@ -62,6 +63,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             "CREATE TABLE " + TABLE_PATIENTS + " (" +
                     KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     KEY_DOCTOR_ID + " INTEGER NOT NULL, " +
+                    KEY_USER_ID + " INTEGER, " +
                     KEY_FIRST_NAME + " TEXT NOT NULL, " +
                     KEY_LAST_NAME + " TEXT NOT NULL, " +
                     KEY_DATE_OF_BIRTH + " TEXT, " +
@@ -169,11 +171,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private void insertSampleData(SQLiteDatabase db) {
         // Insert sample patients (Tunisian names and phone numbers)
         // All sample patients belong to the sample doctor (id=1)
+        // First patient is linked to the sample patient user (user_id=2, Sarra Mejri)
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
-                KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
+                KEY_DOCTOR_ID + ", " + KEY_USER_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +
                 KEY_GENDER + ", " + KEY_PHONE + ", " + KEY_EMAIL + ", " +
                 KEY_BLOOD_GROUP + ", " + KEY_LAST_VISIT + ") VALUES " +
-                "(1, 'Fatma', 'Trabelsi', '1990-05-15', 'Female', '+216 20 123 456', 'fatma.trabelsi@email.tn', 'A+', '2025-11-10')");
+                "(1, 2, 'Sarra', 'Mejri', '1995-03-20', 'Female', '+216 98 111 222', 'patient@medimanager.tn', 'A+', '2025-11-10')");
 
         db.execSQL("INSERT INTO " + TABLE_PATIENTS + " (" +
                 KEY_DOCTOR_ID + ", " + KEY_FIRST_NAME + ", " + KEY_LAST_NAME + ", " + KEY_DATE_OF_BIRTH + ", " +

@@ -19,6 +19,7 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
     private final Context context;
     private List<Appointment> appointmentList;
     private OnItemClickListener listener;
+    private boolean readOnly = false;
 
     // Interface for click listeners
     public interface OnItemClickListener {
@@ -33,6 +34,11 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -123,11 +129,17 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
                 }
             });
 
-            binding.tvStatus.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onStatusClick(appointment);
-                }
-            });
+            // Status click only enabled for doctors (not read-only)
+            if (!readOnly) {
+                binding.tvStatus.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onStatusClick(appointment);
+                    }
+                });
+            } else {
+                binding.tvStatus.setOnClickListener(null);
+                binding.tvStatus.setClickable(false);
+            }
 
             // Optional: Make the card clickable with ripple effect
             binding.getRoot().setClickable(true);

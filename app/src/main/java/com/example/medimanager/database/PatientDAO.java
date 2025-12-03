@@ -22,6 +22,9 @@ public class PatientDAO {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.KEY_DOCTOR_ID, patient.getDoctorId());
+        if (patient.getUserId() != null) {
+            values.put(DatabaseHelper.KEY_USER_ID, patient.getUserId());
+        }
         values.put(DatabaseHelper.KEY_FIRST_NAME, patient.getFirstName());
         values.put(DatabaseHelper.KEY_LAST_NAME, patient.getLastName());
         values.put(DatabaseHelper.KEY_DATE_OF_BIRTH, patient.getDateOfBirth());
@@ -182,11 +185,41 @@ public class PatientDAO {
         return patient;
     }
 
+    // Read - Get patient by user_id (for linking patient user accounts)
+    public Patient getPatientByUserId(int userId) {
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        Cursor cursor = database.query(
+                DatabaseHelper.TABLE_PATIENTS,
+                null,
+                DatabaseHelper.KEY_USER_ID + " = ?",
+                new String[]{String.valueOf(userId)},
+                null, null, null
+        );
+
+        Patient patient = null;
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                patient = cursorToPatient(cursor);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return patient;
+    }
+
     // Update
     public int updatePatient(Patient patient) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.KEY_DOCTOR_ID, patient.getDoctorId());
+        if (patient.getUserId() != null) {
+            values.put(DatabaseHelper.KEY_USER_ID, patient.getUserId());
+        } else {
+            values.putNull(DatabaseHelper.KEY_USER_ID);
+        }
         values.put(DatabaseHelper.KEY_FIRST_NAME, patient.getFirstName());
         values.put(DatabaseHelper.KEY_LAST_NAME, patient.getLastName());
         values.put(DatabaseHelper.KEY_DATE_OF_BIRTH, patient.getDateOfBirth());
@@ -287,6 +320,10 @@ public class PatientDAO {
 
         patient.setId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_ID)));
         patient.setDoctorId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_DOCTOR_ID)));
+        int userIdIndex = cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_USER_ID);
+        if (!cursor.isNull(userIdIndex)) {
+            patient.setUserId(cursor.getInt(userIdIndex));
+        }
         patient.setFirstName(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_FIRST_NAME)));
         patient.setLastName(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_LAST_NAME)));
         patient.setDateOfBirth(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_DATE_OF_BIRTH)));

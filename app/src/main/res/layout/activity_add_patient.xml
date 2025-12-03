@@ -39,7 +39,7 @@
                 android:textColor="@color/text_primary"
                 android:textSize="@dimen/text_size_xlarge"
                 android:textStyle="bold"
-                android:layout_marginStart="@dimen/margin_medium"/>
+                android:layout_marginStart="@dimen/margin_medium" />
         </LinearLayout>
 
         <!-- Form Card -->
@@ -64,7 +64,7 @@
                     android:textColor="@color/primary"
                     android:textSize="@dimen/text_size_medium"
                     android:textStyle="bold"
-                    android:layout_marginBottom="@dimen/margin_medium"/>
+                    android:layout_marginBottom="@dimen/margin_medium" />
 
                 <!-- First Name -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -79,7 +79,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textCapWords"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Last Name -->
@@ -95,7 +95,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textCapWords"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Date of Birth -->
@@ -113,7 +113,7 @@
                         android:focusable="false"
                         android:clickable="true"
                         android:inputType="none"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Gender Spinner -->
@@ -128,7 +128,7 @@
                         android:id="@+id/spinnerGender"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"/>
+                        android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Contact Information Section -->
@@ -140,7 +140,7 @@
                     android:textSize="@dimen/text_size_medium"
                     android:textStyle="bold"
                     android:layout_marginTop="@dimen/margin_medium"
-                    android:layout_marginBottom="@dimen/margin_medium"/>
+                    android:layout_marginBottom="@dimen/margin_medium" />
 
                 <!-- Phone -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -148,6 +148,7 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/phone"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    app:prefixText="+216 "
                     android:layout_marginBottom="@dimen/margin_medium">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -155,7 +156,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="phone"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Email -->
@@ -171,7 +172,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textEmailAddress"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Address -->
@@ -189,7 +190,7 @@
                         android:inputType="textMultiLine"
                         android:minLines="2"
                         android:maxLines="3"
-                        android:gravity="top"/>
+                        android:gravity="top" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Medical Information Section -->
@@ -201,7 +202,7 @@
                     android:textSize="@dimen/text_size_medium"
                     android:textStyle="bold"
                     android:layout_marginTop="@dimen/margin_medium"
-                    android:layout_marginBottom="@dimen/margin_medium"/>
+                    android:layout_marginBottom="@dimen/margin_medium" />
 
                 <!-- Blood Group Spinner -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -215,7 +216,7 @@
                         android:id="@+id/spinnerBloodGroup"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"/>
+                        android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Allergies -->
@@ -233,7 +234,7 @@
                         android:inputType="textMultiLine"
                         android:minLines="2"
                         android:maxLines="4"
-                        android:gravity="top"/>
+                        android:gravity="top" />
                 </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>
@@ -257,7 +258,7 @@
                 android:backgroundTint="@color/card_background"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:padding="@dimen/padding_medium"
-                android:textAllCaps="false"/>
+                android:textAllCaps="false" />
 
             <Button
                 android:id="@+id/btnSave"
@@ -269,7 +270,7 @@
                 android:textColor="@color/text_white"
                 android:backgroundTint="@color/primary"
                 android:padding="@dimen/padding_medium"
-                android:textAllCaps="false"/>
+                android:textAllCaps="false" />
         </LinearLayout>
 
     </LinearLayout>

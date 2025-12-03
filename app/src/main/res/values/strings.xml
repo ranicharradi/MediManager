@@ -101,6 +101,7 @@
     <string name="patient_added">Patient added successfully</string>
     <string name="patient_updated">Patient updated successfully</string>
     <string name="patient_deleted">Patient deleted successfully</string>
+    <string name="profile_updated">Profile updated successfully</string>
     <string name="consultation_added">Consultation added successfully</string>
     <string name="consultation_updated">Consultation updated successfully</string>
     <string name="consultation_deleted">Consultation deleted successfully</string>
