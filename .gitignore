@@ -22,3 +22,4 @@ CHANGELOG.md
 /.venv/
 pull_db_export.ps1
 .github/
+TODO.md

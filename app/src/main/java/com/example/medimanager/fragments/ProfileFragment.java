@@ -90,6 +90,10 @@ public class ProfileFragment extends Fragment {
     }
 
     private void logout() {
+        // Reset session flags for login alerts
+        HomeFragment.resetSessionFlag();
+        PatientHomeFragment.resetSessionFlag();
+        
         // Clear login state
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(Constants.PREF_IS_LOGGED_IN, false);

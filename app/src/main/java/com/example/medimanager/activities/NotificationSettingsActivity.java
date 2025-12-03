@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.medimanager.databinding.ActivityNotificationSettingsBinding;
+import com.example.medimanager.utils.Constants;
 
 public class NotificationSettingsActivity extends AppCompatActivity {
 
@@ -18,7 +19,7 @@ public class NotificationSettingsActivity extends AppCompatActivity {
         binding = ActivityNotificationSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        sharedPreferences = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
 
         setupToolbar();
         loadSettings();
@@ -30,14 +31,14 @@ public class NotificationSettingsActivity extends AppCompatActivity {
     }
 
     private void loadSettings() {
-        boolean notificationsEnabled = sharedPreferences.getBoolean("notifications_enabled", true);
+        boolean notificationsEnabled = sharedPreferences.getBoolean(Constants.PREF_NOTIFICATIONS_ENABLED, true);
         binding.switchNotifications.setChecked(notificationsEnabled);
     }
 
     private void setupListeners() {
         binding.switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean("notifications_enabled", isChecked);
+            editor.putBoolean(Constants.PREF_NOTIFICATIONS_ENABLED, isChecked);
             editor.apply();
         });
     }

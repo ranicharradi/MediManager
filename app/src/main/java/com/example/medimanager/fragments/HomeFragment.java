@@ -39,6 +39,8 @@ import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
+    private static boolean hasShownPendingAlert = false; // Session flag - reset on app restart
+    
     private FragmentHomeBinding binding;
 
     // Database
@@ -81,6 +83,55 @@ public class HomeFragment extends Fragment {
         loadTodayAppointments();
         loadRecentPatients();
         updateDate();
+        
+        // Check for pending appointment requests
+        checkPendingRequests();
+    }
+    
+    private void checkPendingRequests() {
+        // Only show once per session
+        if (hasShownPendingAlert) return;
+        
+        // Respect the notification toggle setting
+        if (!NotificationHelper.areNotificationsEnabled(requireContext())) {
+            return;
+        }
+        
+        if (doctorId == -1) return;
+        
+        List<Appointment> allAppointments = appointmentDAO.getAllAppointments(doctorId);
+        int pendingCount = 0;
+        for (Appointment apt : allAppointments) {
+            if (apt.isPending()) {
+                pendingCount++;
+            }
+        }
+        
+        if (pendingCount > 0) {
+            String message = pendingCount == 1 
+                    ? "You have 1 pending appointment request" 
+                    : "You have " + pendingCount + " pending appointment requests";
+            
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("🔔 Pending Requests")
+                    .setMessage(message + "\n\nGo to Appointments tab and select 'Pending' to review them.")
+                    .setPositiveButton("View Now", (dialog, which) -> {
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).navigateToAppointments();
+                        }
+                    })
+                    .setNegativeButton("Later", null)
+                    .show();
+            
+            hasShownPendingAlert = true; // Mark as shown for this session
+        }
+    }
+    
+    /**
+     * Reset the session flag (call this on logout)
+     */
+    public static void resetSessionFlag() {
+        hasShownPendingAlert = false;
     }
 
     private void setupRecyclerView() {

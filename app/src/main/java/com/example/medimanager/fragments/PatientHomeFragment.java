@@ -39,6 +39,8 @@ import java.util.Locale;
 
 public class PatientHomeFragment extends Fragment {
 
+    private static boolean hasShownAppointmentAlert = false; // Session flag - reset on app restart
+    
     private FragmentPatientHomeBinding binding;
 
     private AppointmentDAO appointmentDAO;
@@ -80,6 +82,9 @@ public class PatientHomeFragment extends Fragment {
         // Load data
         updateDate();
         loadPatientData();
+        
+        // Check for appointment status updates (show alert on login)
+        checkAppointmentUpdates();
     }
 
     private void loadUserInfo() {
@@ -323,6 +328,83 @@ public class PatientHomeFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM dd, yyyy", Locale.getDefault());
         String currentDate = sdf.format(new Date());
         binding.tvDate.setText(currentDate);
+    }
+
+    /**
+     * Check for appointment status updates (approved/scheduled requests).
+     * Shows an alert if the patient has upcoming scheduled appointments.
+     */
+    private void checkAppointmentUpdates() {
+        // Only show once per session
+        if (hasShownAppointmentAlert) return;
+        
+        // Respect the notification toggle setting
+        if (!NotificationHelper.areNotificationsEnabled(requireContext())) {
+            return;
+        }
+        
+        if (patientId == -1) return;
+
+        List<Appointment> appointments = appointmentDAO.getAppointmentsByPatient((int) patientId);
+        
+        int scheduledCount = 0;
+        int pendingCount = 0;
+        StringBuilder scheduledDetails = new StringBuilder();
+        
+        for (Appointment apt : appointments) {
+            if (apt.isScheduled()) {
+                scheduledCount++;
+                if (scheduledCount <= 3) { // Show up to 3 appointments in detail
+                    scheduledDetails.append("• ")
+                            .append(apt.getAppointmentDate())
+                            .append(" at ")
+                            .append(apt.getAppointmentTime())
+                            .append(" - ")
+                            .append(apt.getReason())
+                            .append("\n");
+                }
+            } else if (apt.isPending()) {
+                pendingCount++;
+            }
+        }
+
+        // Build message based on what we found
+        StringBuilder message = new StringBuilder();
+        
+        if (scheduledCount > 0) {
+            message.append("✅ You have ").append(scheduledCount)
+                    .append(" scheduled appointment").append(scheduledCount > 1 ? "s" : "")
+                    .append(":\n\n")
+                    .append(scheduledDetails);
+            if (scheduledCount > 3) {
+                message.append("...and ").append(scheduledCount - 3).append(" more\n");
+            }
+        }
+        
+        if (pendingCount > 0) {
+            if (message.length() > 0) message.append("\n");
+            message.append("⏳ You have ").append(pendingCount)
+                    .append(" pending request").append(pendingCount > 1 ? "s" : "")
+                    .append(" awaiting doctor approval.");
+        }
+
+        // Only show dialog if there are appointments to mention
+        if (scheduledCount > 0 || pendingCount > 0) {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("📋 Your Appointments")
+                    .setMessage(message.toString())
+                    .setPositiveButton("OK", null)
+                    .show();
+            
+            hasShownAppointmentAlert = true; // Mark as shown for this session
+        }
+    }
+    
+    /**
+     * Reset the session flag (call this on logout)
+     */
+    public static void resetSessionFlag() {
+        hasShownAppointmentAlert = false;
     }
 
     @Override

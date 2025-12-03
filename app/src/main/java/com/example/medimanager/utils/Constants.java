@@ -32,8 +32,8 @@ public class Constants {
     public static final int MIN_PASSWORD_LENGTH = 6;
 
     // Preferences
-    public static final String PREF_NAME = "MediManagerPrefs";
     public static final String PREFS_NAME = "MediManagerPrefs";
+    public static final String PREF_NOTIFICATIONS_ENABLED = "notifications_enabled";
     public static final String PREF_FIRST_LAUNCH = "first_launch";
     public static final String PREF_DARK_MODE = "dark_mode";
     public static final String PREF_IS_LOGGED_IN = "is_logged_in";
