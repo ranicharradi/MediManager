@@ -27,35 +27,39 @@ public class DatabaseExporter {
     /**
      * Export the entire database structure and data to a text file.
      * File is saved to the app's external files directory.
+     * Runs on a background thread to avoid blocking the UI.
      *
      * @param context The application context
      * @param trigger Description of what triggered the export (e.g., "New Patient Added")
      */
     public static void exportDatabase(Context context, String trigger) {
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(context);
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        new Thread(() -> {
+            Log.d(TAG, "Starting database export triggered by: " + trigger);
+            DatabaseHelper dbHelper = DatabaseHelper.getInstance(context);
+            SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-        StringBuilder output = new StringBuilder();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        String timestamp = sdf.format(new Date());
+            StringBuilder output = new StringBuilder();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            String timestamp = sdf.format(new Date());
 
-        // Header
-        output.append("=".repeat(60)).append("\n");
-        output.append("MediManager Database Export\n");
-        output.append("=".repeat(60)).append("\n");
-        output.append("Timestamp: ").append(timestamp).append("\n");
-        output.append("Trigger: ").append(trigger).append("\n");
-        output.append("Database Version: 5\n");
-        output.append("=".repeat(60)).append("\n\n");
+            // Header
+            output.append("=".repeat(60)).append("\n");
+            output.append("MediManager Database Export\n");
+            output.append("=".repeat(60)).append("\n");
+            output.append("Timestamp: ").append(timestamp).append("\n");
+            output.append("Trigger: ").append(trigger).append("\n");
+            output.append("Database Version: 5\n");
+            output.append("=".repeat(60)).append("\n\n");
 
-        // Export each table
-        output.append(exportTable(db, DatabaseHelper.TABLE_USERS, "USERS"));
-        output.append(exportTable(db, DatabaseHelper.TABLE_PATIENTS, "PATIENTS"));
-        output.append(exportTable(db, DatabaseHelper.TABLE_APPOINTMENTS, "APPOINTMENTS"));
-        output.append(exportTable(db, DatabaseHelper.TABLE_CONSULTATIONS, "CONSULTATIONS"));
+            // Export each table
+            output.append(exportTable(db, DatabaseHelper.TABLE_USERS, "USERS"));
+            output.append(exportTable(db, DatabaseHelper.TABLE_PATIENTS, "PATIENTS"));
+            output.append(exportTable(db, DatabaseHelper.TABLE_APPOINTMENTS, "APPOINTMENTS"));
+            output.append(exportTable(db, DatabaseHelper.TABLE_CONSULTATIONS, "CONSULTATIONS"));
 
-        // Save to file
-        saveToFile(context, output.toString(), timestamp);
+            // Save to file
+            saveToFile(context, output.toString(), timestamp);
+        }).start();
     }
 
     private static String exportTable(SQLiteDatabase db, String tableName, String displayName) {
@@ -114,23 +118,23 @@ public class DatabaseExporter {
                 exportDir.mkdirs();
             }
 
-            // Create filename with timestamp
-            String filename = "db_export_" + timestamp.replace(":", "-").replace(" ", "_") + ".txt";
-            File exportFile = new File(exportDir, filename);
+            // Delete all old export files first
+            File[] oldFiles = exportDir.listFiles();
+            if (oldFiles != null) {
+                for (File oldFile : oldFiles) {
+                    if (oldFile.isFile()) {
+                        oldFile.delete();
+                    }
+                }
+            }
 
-            // Also save as "latest.txt" for easy access
+            // Save only the latest export
             File latestFile = new File(exportDir, "latest_export.txt");
-
-            // Write to both files
-            FileWriter writer = new FileWriter(exportFile);
-            writer.write(content);
-            writer.close();
-
             FileWriter latestWriter = new FileWriter(latestFile);
             latestWriter.write(content);
             latestWriter.close();
 
-            Log.i(TAG, "Database exported to: " + exportFile.getAbsolutePath());
+            Log.i(TAG, "Database exported to: " + latestFile.getAbsolutePath());
 
         } catch (IOException e) {
             Log.e(TAG, "Error saving export file", e);
