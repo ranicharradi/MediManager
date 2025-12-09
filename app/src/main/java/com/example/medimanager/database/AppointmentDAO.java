@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.example.medimanager.models.Appointment;
+import com.example.medimanager.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -269,7 +270,7 @@ public class AppointmentDAO {
                 "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_APPOINTMENTS +
                 " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND (" +
                 DatabaseHelper.KEY_STATUS + " = 'scheduled' OR " +
-                DatabaseHelper.KEY_STATUS + " = 'in_progress')",
+                DatabaseHelper.KEY_STATUS + " = '" + Constants.STATUS_IN_PROGRESS + "')",
             new String[]{String.valueOf(doctorId)}
         );
 

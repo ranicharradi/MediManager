@@ -2,7 +2,6 @@ package com.example.medimanager.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +26,7 @@ import com.example.medimanager.databinding.FragmentAppointmentsBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.SessionManager;
 import com.example.medimanager.utils.NotificationHelper;
 
 import java.util.ArrayList;
@@ -46,6 +46,7 @@ public class AppointmentsFragment extends Fragment {
     private boolean isDoctor = true;
     private int doctorId = -1;
     private int patientId = -1;
+    private SessionManager sessionManager;
 
     private final ActivityResultLauncher<Intent> addAppointmentLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -72,11 +73,11 @@ public class AppointmentsFragment extends Fragment {
         patientDAO = new PatientDAO(requireContext());
 
         // Load current user info
-        SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-        isDoctor = prefs.getBoolean(Constants.PREF_IS_DOCTOR, true);
-        doctorId = (int) prefs.getLong(Constants.PREF_USER_ID, -1);
+        sessionManager = new SessionManager(requireContext());
+        isDoctor = sessionManager.isDoctor();
+        doctorId = (int) sessionManager.getUserId();
         if (!isDoctor) {
-            String email = prefs.getString(Constants.PREF_USER_EMAIL, "");
+            String email = sessionManager.getUserEmail();
             Patient patient = patientDAO.getPatientByEmail(email);
             if (patient != null) {
                 patientId = patient.getId();
@@ -116,19 +117,20 @@ public class AppointmentsFragment extends Fragment {
                     }
                 } else {
                     // Patients can only view appointment info
-                    String statusText = appointment.isPending() ? "Pending doctor approval" : appointment.getStatusDisplayName();
-                    String info = "Appointment: " + appointment.getReason() + "\n" +
-                            "Date: " + appointment.getAppointmentDate() + "\n" +
-                            "Time: " + appointment.getAppointmentTime() + "\n" +
-                            "Status: " + statusText;
-                    Toast.makeText(requireContext(), info, Toast.LENGTH_LONG).show();
+                        String statusText = appointment.isPending() ? getString(R.string.pending_doctor_approval) : appointment.getStatusDisplayName();
+                        String info = getString(R.string.appointment_info,
+                            appointment.getReason(),
+                            appointment.getAppointmentDate(),
+                            appointment.getAppointmentTime(),
+                            statusText);
+                        Toast.makeText(requireContext(), info, Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onStatusClick(Appointment appointment) {
                 if (!isDoctor) {
-                    Toast.makeText(requireContext(), "Only doctors can update status", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.toast_only_doctors_update_status), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 // If pending, show approval dialog instead of cycling status
@@ -230,7 +232,7 @@ public class AppointmentsFragment extends Fragment {
         if (filteredList.isEmpty()) {
             binding.rvAppointments.setVisibility(View.GONE);
             binding.tvEmptyState.setVisibility(View.VISIBLE);
-            binding.tvEmptyState.setText("No appointments found");
+            binding.tvEmptyState.setText(R.string.no_appointments_found);
         } else {
             binding.rvAppointments.setVisibility(View.VISIBLE);
             binding.tvEmptyState.setVisibility(View.GONE);
@@ -255,7 +257,7 @@ public class AppointmentsFragment extends Fragment {
         if (result > 0) {
             appointment.setStatus(newStatus);
             appointmentAdapter.notifyDataSetChanged();
-            Toast.makeText(requireContext(), "Status updated", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.status_updated), Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -82,6 +82,9 @@ public class AddConsultationActivity extends AppCompatActivity {
         Patient patient = patientDAO.getPatientById(patientId);
         if (patient != null) {
             binding.tvPatientName.setText("Patient: " + patient.getFullName());
+        } else {
+            Toast.makeText(this, R.string.patient_not_found, Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 

@@ -105,17 +105,17 @@ public class PatientAdapter extends RecyclerView.Adapter<PatientAdapter.PatientV
             // Set blood group
             String bloodGroup = patient.getBloodGroup();
             if (bloodGroup != null && !bloodGroup.isEmpty()) {
-                binding.tvBloodGroup.setText("Blood: " + bloodGroup);
+                binding.tvBloodGroup.setText(context.getString(com.example.medimanager.R.string.blood_prefix, bloodGroup));
             } else {
-                binding.tvBloodGroup.setText("Blood: N/A");
+                binding.tvBloodGroup.setText(context.getString(com.example.medimanager.R.string.blood_unknown));
             }
 
             // Set last visit
             String lastVisit = patient.getLastVisit();
             if (lastVisit != null && !lastVisit.isEmpty()) {
-                binding.tvLastVisit.setText("Last visit: " + lastVisit);
+                binding.tvLastVisit.setText(context.getString(com.example.medimanager.R.string.last_visit_prefix, lastVisit));
             } else {
-                binding.tvLastVisit.setText("Last visit: N/A");
+                binding.tvLastVisit.setText(context.getString(com.example.medimanager.R.string.last_visit_unknown));
             }
 
             // Set click listeners

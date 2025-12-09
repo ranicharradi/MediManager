@@ -100,7 +100,11 @@ public class PatientDetailsActivity extends AppCompatActivity {
         binding.btnDelete.setOnClickListener(v -> showDeleteConfirmationDialog());
 
         // Book appointment
-        binding.btnBookAppointment.setOnClickListener(v -> Toast.makeText(PatientDetailsActivity.this, "Book appointment feature coming soon", Toast.LENGTH_SHORT).show());
+        binding.btnBookAppointment.setOnClickListener(v -> {
+            Intent intent = new Intent(PatientDetailsActivity.this, AddAppointmentActivity.class);
+            intent.putExtra(Constants.EXTRA_PATIENT_ID, patientId);
+            formLauncher.launch(intent);
+        });
 
         // Add consultation
         binding.btnAddConsultation.setOnClickListener(v -> {
@@ -121,8 +125,19 @@ public class PatientDetailsActivity extends AppCompatActivity {
         consultationAdapter.setOnItemClickListener(new ConsultationAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Consultation consultation) {
-                // View consultation details
-                Toast.makeText(PatientDetailsActivity.this, "View consultation", Toast.LENGTH_SHORT).show();
+                // Show consultation details in a dialog
+                StringBuilder details = new StringBuilder();
+                details.append(getString(R.string.consultation_date_label)).append(" ").append(consultation.getConsultationDate()).append("\n");
+                details.append(getString(R.string.diagnosis_label)).append(" ").append(consultation.getDiagnosis()).append("\n");
+                details.append(getString(R.string.treatment_label)).append(" ").append(consultation.getTreatment()).append("\n");
+                details.append(getString(R.string.prescription_label)).append(" ").append(consultation.getPrescription()).append("\n");
+                details.append(getString(R.string.notes_label)).append(" ").append(consultation.getNotes());
+
+                new AlertDialog.Builder(PatientDetailsActivity.this)
+                        .setTitle(R.string.consultation_details_title)
+                        .setMessage(details.toString())
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
             }
 
             @Override
@@ -277,9 +292,13 @@ public class PatientDetailsActivity extends AppCompatActivity {
     }
 
     private void deleteConsultation(Consultation consultation) {
-        // Implement delete in ConsultationDAO
-        Toast.makeText(this, "Consultation deleted", Toast.LENGTH_SHORT).show();
-        loadConsultations();
+        int result = consultationDAO.deleteConsultation(consultation.getId());
+        if (result > 0) {
+            Toast.makeText(this, R.string.consultation_deleted, Toast.LENGTH_SHORT).show();
+            loadConsultations();
+        } else {
+            Toast.makeText(this, R.string.error_occurred, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showApprovalDialog(Appointment appointment) {

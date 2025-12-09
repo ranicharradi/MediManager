@@ -72,6 +72,52 @@
     <string name="consultation">Consultation</string>
     <string name="request_appointment">Request Appointment</string>
     <string name="appointment_request_sent">Appointment request sent successfully</string>
+    <string name="consultation_deleted">Consultation deleted</string>
+    <string name="consultation_details_title">Consultation Details</string>
+    <string name="consultation_date_label">Date:</string>
+    <string name="diagnosis_label">Diagnosis:</string>
+    <string name="treatment_label">Treatment:</string>
+    <string name="prescription_label">Prescription:</string>
+    <string name="notes_label">Notes:</string>
+    <string name="ok">OK</string>
+    <string name="pending_requests_title">Pending Requests</string>
+    <string name="pending_request_single">You have 1 pending appointment request</string>
+    <string name="pending_request_multiple">You have %1$d pending appointment requests</string>
+    <string name="pending_requests_hint">Review pending appointments in the Appointments tab.</string>
+    <string name="action_view_now">View Now</string>
+    <string name="action_later">Later</string>
+    <string name="toast_go_to_appointments_delete">Go to Appointments tab to delete</string>
+    <string name="toast_go_to_patients_delete">Go to Patients tab to delete</string>
+    <string name="status_updated">Status updated</string>
+    <string name="pending_doctor_approval">Pending doctor approval</string>
+    <string name="appointment_info">Appointment: %1$s
+        Date: %2$s
+        Time: %3$s
+        Status: %4$s</string>
+    <string name="welcome_user">Welcome, %1$s</string>
+    <string name="default_patient_name">Patient</string>
+    <string name="contact_doctor_change_status">Contact your doctor to change status</string>
+    <string name="toast_consultation_diagnosis">Consultation: %1$s</string>
+    <string name="error_no_patient_record">No patient record linked to your account</string>
+    <string name="error_no_doctor_assigned">No doctor assigned to you yet</string>
+    <string name="error_fill_required_fields">Please fill in all required fields</string>
+    <string name="default_time_9am">09:00 AM</string>
+    <string name="pending_summary_scheduled">You have %1$d scheduled appointment(s):
+        %2$s</string>
+    <string name="pending_summary_pending">You have %1$d pending request(s) awaiting doctor
+        approval.</string>
+    <string name="unknown_doctor">Unknown Doctor</string>
+    <string name="unknown_patient">Unknown Patient</string>
+    <string name="doctor_prefix">Dr. %1$s</string>
+    <string name="time_unknown">--:--</string>
+    <string name="reason_unknown">No reason specified</string>
+    <string name="blood_prefix">Blood: %1$s</string>
+    <string name="blood_unknown">Blood: N/A</string>
+    <string name="last_visit_prefix">Last visit: %1$s</string>
+    <string name="last_visit_unknown">Last visit: N/A</string>
+    <string name="patient_not_found">Patient not found</string>
+    <string name="info_not_available">N/A</string>
+    <string name="toast_only_doctors_update_status">Only doctors can update status</string>
     <string name="pending_approval">Pending Approval</string>
     <string name="approve">Approve</string>
     <string name="reject">Reject</string>
@@ -126,7 +172,6 @@
     <string name="profile_updated">Profile updated successfully</string>
     <string name="consultation_added">Consultation added successfully</string>
     <string name="consultation_updated">Consultation updated successfully</string>
-    <string name="consultation_deleted">Consultation deleted successfully</string>
     <string name="appointment_added">Appointment added successfully</string>
     <string name="error_occurred">An error occurred</string>
     <string name="fill_required_fields">Please fill all required fields</string>

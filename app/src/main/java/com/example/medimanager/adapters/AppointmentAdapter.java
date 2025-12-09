@@ -94,16 +94,16 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
             if (showDoctorName) {
                 // Patient portal - show doctor name with "Dr." prefix
                 if (appointment.getDoctorName() != null && !appointment.getDoctorName().isEmpty()) {
-                    binding.tvPatientName.setText("Dr. " + appointment.getDoctorName());
+                    binding.tvPatientName.setText(context.getString(R.string.doctor_prefix, appointment.getDoctorName()));
                 } else {
-                    binding.tvPatientName.setText("Unknown Doctor");
+                    binding.tvPatientName.setText(context.getString(R.string.unknown_doctor));
                 }
             } else {
                 // Doctor portal - show patient name
                 if (appointment.getPatientName() != null && !appointment.getPatientName().isEmpty()) {
                     binding.tvPatientName.setText(appointment.getPatientName());
                 } else {
-                    binding.tvPatientName.setText("Unknown Patient");
+                    binding.tvPatientName.setText(context.getString(R.string.unknown_patient));
                 }
             }
 
@@ -111,14 +111,14 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
             if (appointment.getAppointmentTime() != null && !appointment.getAppointmentTime().isEmpty()) {
                 binding.tvTime.setText(appointment.getAppointmentTime());
             } else {
-                binding.tvTime.setText("--:--");
+                binding.tvTime.setText(context.getString(R.string.time_unknown));
             }
 
             // Set reason
             if (appointment.getReason() != null && !appointment.getReason().isEmpty()) {
                 binding.tvReason.setText(appointment.getReason());
             } else {
-                binding.tvReason.setText("No reason specified");
+                binding.tvReason.setText(context.getString(R.string.reason_unknown));
             }
 
             // Set status with color

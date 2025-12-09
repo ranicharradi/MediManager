@@ -1,9 +1,6 @@
 package com.example.medimanager.fragments;
 
-import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +25,9 @@ import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Consultation;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.DateTimePickerHelper;
 import com.example.medimanager.utils.NotificationHelper;
+import com.example.medimanager.utils.SessionManager;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,6 +54,7 @@ public class PatientHomeFragment extends Fragment {
     private long patientId = -1;
     private int doctorId = -1;
     private String patientName = "";
+    private SessionManager sessionManager;
 
     @Nullable
     @Override
@@ -71,6 +71,7 @@ public class PatientHomeFragment extends Fragment {
         appointmentDAO = new AppointmentDAO(requireContext());
         consultationDAO = new ConsultationDAO(requireContext());
         patientDAO = new PatientDAO(requireContext());
+        sessionManager = new SessionManager(requireContext());
 
         // Get logged-in user info
         loadUserInfo();
@@ -88,9 +89,11 @@ public class PatientHomeFragment extends Fragment {
     }
 
     private void loadUserInfo() {
-        SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-        long userId = prefs.getLong(Constants.PREF_USER_ID, -1);
-        patientName = prefs.getString(Constants.PREF_USER_NAME, "Patient");
+        long userId = sessionManager.getUserId();
+        patientName = sessionManager.getUserName();
+        if (patientName == null || patientName.isEmpty()) {
+            patientName = getString(R.string.default_patient_name);
+        }
 
         // Find the patient record linked to this user account via user_id
         if (userId != -1) {
@@ -101,7 +104,7 @@ public class PatientHomeFragment extends Fragment {
             }
         }
 
-        binding.tvWelcome.setText("Welcome, " + patientName);
+        binding.tvWelcome.setText(getString(R.string.welcome_user, patientName));
     }
 
     private void setupRecyclerViews() {
@@ -118,17 +121,18 @@ public class PatientHomeFragment extends Fragment {
             @Override
             public void onItemClick(Appointment appointment) {
                 // Show appointment details in a toast (read-only)
-                String info = "Appointment: " + appointment.getReason() + "\n" +
-                        "Date: " + appointment.getAppointmentDate() + "\n" +
-                        "Time: " + appointment.getAppointmentTime() + "\n" +
-                        "Status: " + appointment.getStatusDisplayName();
+                String info = getString(R.string.appointment_info,
+                    appointment.getReason(),
+                    appointment.getAppointmentDate(),
+                    appointment.getAppointmentTime(),
+                    appointment.getStatusDisplayName());
                 Toast.makeText(requireContext(), info, Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onStatusClick(Appointment appointment) {
                 // Patients cannot change appointment status
-                Toast.makeText(requireContext(), "Contact your doctor to change status", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.contact_doctor_change_status), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -152,7 +156,7 @@ public class PatientHomeFragment extends Fragment {
         consultationAdapter.setOnItemClickListener(new ConsultationAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Consultation consultation) {
-                Toast.makeText(requireContext(), "Consultation: " + consultation.getDiagnosis(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.toast_consultation_diagnosis, consultation.getDiagnosis()), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -170,11 +174,11 @@ public class PatientHomeFragment extends Fragment {
     private void setupClickListeners() {
         binding.btnBookAppointment.setOnClickListener(v -> {
             if (patientId == -1) {
-                Toast.makeText(requireContext(), "No patient record linked to your account", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.error_no_patient_record), Toast.LENGTH_SHORT).show();
                 return;
             }
             if (doctorId == -1) {
-                Toast.makeText(requireContext(), "No doctor assigned to you yet", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.error_no_doctor_assigned), Toast.LENGTH_SHORT).show();
                 return;
             }
             showRequestAppointmentDialog();
@@ -196,39 +200,27 @@ public class PatientHomeFragment extends Fragment {
         etPreferredDate.setText(dateFormat.format(calendar.getTime()));
 
         // Set default time
-        etPreferredTime.setText("09:00 AM");
+        etPreferredTime.setText(getString(R.string.default_time_9am));
 
         // Date picker
-        etPreferredDate.setOnClickListener(v -> {
-            Calendar cal = Calendar.getInstance();
-            DatePickerDialog datePickerDialog = new DatePickerDialog(
-                    requireContext(),
-                    (view, year, month, dayOfMonth) -> {
-                        Calendar selectedDate = Calendar.getInstance();
-                        selectedDate.set(year, month, dayOfMonth);
-                        etPreferredDate.setText(dateFormat.format(selectedDate.getTime()));
-                    },
-                    cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)
-            );
-            datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
-            datePickerDialog.show();
-        });
+        etPreferredDate.setOnClickListener(v -> DateTimePickerHelper.showDatePicker(
+                requireContext(),
+                calendar,
+                true,
+                false,
+                (formattedDate, selectedCalendar) -> {
+                    calendar.setTime(selectedCalendar.getTime());
+                    etPreferredDate.setText(formattedDate);
+                }
+        ));
 
         // Time picker
-        etPreferredTime.setOnClickListener(v -> {
-            TimePickerDialog timePickerDialog = new TimePickerDialog(
-                    requireContext(),
-                    (view, hourOfDay, minute) -> {
-                        String amPm = hourOfDay >= 12 ? "PM" : "AM";
-                        int displayHour = hourOfDay % 12;
-                        if (displayHour == 0) displayHour = 12;
-                        String timeString = String.format(Locale.getDefault(), "%02d:%02d %s", displayHour, minute, amPm);
-                        etPreferredTime.setText(timeString);
-                    },
-                    9, 0, false
-            );
-            timePickerDialog.show();
-        });
+        etPreferredTime.setOnClickListener(v -> DateTimePickerHelper.showTimePicker(
+                requireContext(),
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                (hourOfDay, minute, formattedTime) -> etPreferredTime.setText(formattedTime)
+        ));
 
         new AlertDialog.Builder(requireContext())
                 .setView(dialogView)
@@ -239,7 +231,7 @@ public class PatientHomeFragment extends Fragment {
                     String notes = etNotes.getText().toString().trim();
 
                     if (date.isEmpty() || time.isEmpty() || reason.isEmpty()) {
-                        Toast.makeText(requireContext(), "Please fill in all required fields", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), getString(R.string.error_fill_required_fields), Toast.LENGTH_SHORT).show();
                         return;
                     }
 

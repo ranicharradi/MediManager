@@ -21,16 +21,6 @@ public class Constants {
     public static final String TIME_FORMAT = "hh:mm a";
     public static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
-    // Request Codes
-    public static final int REQUEST_ADD_PATIENT = 1001;
-    public static final int REQUEST_EDIT_PATIENT = 1002;
-    public static final int REQUEST_ADD_CONSULTATION = 1003;
-    public static final int REQUEST_ADD_APPOINTMENT = 1004;
-
-    // Validation
-    public static final int MIN_PHONE_LENGTH = 10;
-    public static final int MIN_PASSWORD_LENGTH = 6;
-
     // Preferences
     public static final String PREFS_NAME = "MediManagerPrefs";
     public static final String PREF_NOTIFICATIONS_ENABLED = "notifications_enabled";
@@ -42,22 +32,13 @@ public class Constants {
     public static final String PREF_USER_ID = "user_id";
     public static final String PREF_USER_NAME = "user_name";
 
+    // Validation
+    public static final int MIN_PHONE_LENGTH = 10;
+    public static final int MIN_PASSWORD_LENGTH = 6;
+
     // Database
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "medimanager.db";
-
-    // Error Messages
-    public static final String ERROR_EMPTY_FIELD = "This field cannot be empty";
-    public static final String ERROR_INVALID_EMAIL = "Invalid email address";
-    public static final String ERROR_INVALID_PHONE = "Invalid phone number";
-    public static final String ERROR_INVALID_DATE = "Invalid date";
-
-    // Success Messages
-    public static final String SUCCESS_PATIENT_ADDED = "Patient added successfully";
-    public static final String SUCCESS_PATIENT_UPDATED = "Patient updated successfully";
-    public static final String SUCCESS_PATIENT_DELETED = "Patient deleted successfully";
-    public static final String SUCCESS_CONSULTATION_ADDED = "Consultation added successfully";
-    public static final String SUCCESS_APPOINTMENT_ADDED = "Appointment scheduled successfully";
 
     // Private constructor to prevent instantiation
     private Constants() {

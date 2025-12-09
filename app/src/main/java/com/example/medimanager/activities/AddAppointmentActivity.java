@@ -1,12 +1,9 @@
 package com.example.medimanager.activities;
 
 import android.app.AlarmManager;
-import android.app.DatePickerDialog;
 import android.app.PendingIntent;
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
@@ -24,7 +21,9 @@ import com.example.medimanager.models.Patient;
 import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.DateUtils;
+import com.example.medimanager.utils.DateTimePickerHelper;
 import com.example.medimanager.utils.NotificationHelper;
+import com.example.medimanager.utils.SessionManager;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -50,6 +49,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
     private int selectedHour = 9;
     private int selectedMinute = 0;
     private int doctorId = -1;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,14 +62,14 @@ public class AddAppointmentActivity extends AppCompatActivity {
         appointmentId = getIntent().getIntExtra(Constants.EXTRA_APPOINTMENT_ID, -1);
         isEditMode = getIntent().getBooleanExtra(Constants.EXTRA_IS_EDIT_MODE, false);
 
-        // Initialize DAOs
+        // Initialize helpers and DAOs
+        sessionManager = new SessionManager(this);
         appointmentDAO = new AppointmentDAO(this);
         patientDAO = new PatientDAO(this);
 
         // Load doctor id
-        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
-        boolean isDoctor = prefs.getBoolean(Constants.PREF_IS_DOCTOR, true);
-        doctorId = (int) prefs.getLong(Constants.PREF_USER_ID, -1);
+        boolean isDoctor = sessionManager.isDoctor();
+        doctorId = (int) sessionManager.getUserId();
         if (!isDoctor || doctorId == -1) {
             Toast.makeText(this, "Only doctors can manage appointments", Toast.LENGTH_SHORT).show();
             finish();
@@ -85,6 +85,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
             loadAppointmentData();
         } else {
             // Set default values
+            selectedDate = Calendar.getInstance();
             binding.etAppointmentDate.setText(DateUtils.getCurrentDate());
             binding.etAppointmentTime.setText("09:00 AM");
             binding.spinnerStatus.setText(Constants.STATUS_SCHEDULED, false);
@@ -153,69 +154,67 @@ public class AddAppointmentActivity extends AppCompatActivity {
     }
 
     private void showDatePicker() {
-        final Calendar calendar = Calendar.getInstance();
-
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
+        DateTimePickerHelper.showDatePicker(
                 this,
-                (view, year1, month1, dayOfMonth) -> {
-                    selectedDate = Calendar.getInstance();
-                    selectedDate.set(year1, month1, dayOfMonth);
-
-                    SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT, Locale.getDefault());
-                    String dateString = sdf.format(selectedDate.getTime());
-                    binding.etAppointmentDate.setText(dateString);
-                },
-                year, month, day
-        );
-
-        // Set min date to today
-        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
-        datePickerDialog.show();
+                selectedDate,
+                true,
+                false,
+                (formattedDate, calendar) -> {
+                    selectedDate = calendar;
+                    binding.etAppointmentDate.setText(formattedDate);
+                });
     }
 
     private void showTimePicker() {
-        TimePickerDialog timePickerDialog = new TimePickerDialog(
+        DateTimePickerHelper.showTimePicker(
                 this,
-                (view, hourOfDay, minute) -> {
+                selectedHour,
+                selectedMinute,
+                (hourOfDay, minute, formattedTime) -> {
                     selectedHour = hourOfDay;
                     selectedMinute = minute;
-
-                    // Format time as 12-hour with AM/PM
-                    String amPm = hourOfDay >= 12 ? "PM" : "AM";
-                    int displayHour = hourOfDay % 12;
-                    if (displayHour == 0) displayHour = 12;
-
-                    String timeString = String.format(Locale.getDefault(),
-                            "%02d:%02d %s", displayHour, minute, amPm);
-                    binding.etAppointmentTime.setText(timeString);
-                },
-                selectedHour, selectedMinute, false
-        );
-
-        timePickerDialog.show();
+                    binding.etAppointmentTime.setText(formattedTime);
+                });
     }
 
     private void loadAppointmentData() {
         currentAppointment = appointmentDAO.getAppointmentById(appointmentId);
 
         if (currentAppointment != null) {
-            // Set patient
             selectedPatientId = currentAppointment.getPatientId();
             loadPatients();
 
-            // Set other fields
             binding.etAppointmentDate.setText(currentAppointment.getAppointmentDate());
             binding.etAppointmentTime.setText(currentAppointment.getAppointmentTime());
             binding.etReason.setText(currentAppointment.getReason());
             binding.etNotes.setText(currentAppointment.getNotes());
 
-            // Set status
             String status = currentAppointment.getStatusDisplayName();
             binding.spinnerStatus.setText(status, false);
+
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT, Locale.getDefault());
+                Date parsedDate = dateFormat.parse(currentAppointment.getAppointmentDate());
+                if (parsedDate != null) {
+                    selectedDate = Calendar.getInstance();
+                    selectedDate.setTime(parsedDate);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                SimpleDateFormat timeFormat = new SimpleDateFormat(Constants.TIME_FORMAT, Locale.getDefault());
+                Date parsedTime = timeFormat.parse(currentAppointment.getAppointmentTime());
+                if (parsedTime != null) {
+                    Calendar timeCal = Calendar.getInstance();
+                    timeCal.setTime(parsedTime);
+                    selectedHour = timeCal.get(Calendar.HOUR_OF_DAY);
+                    selectedMinute = timeCal.get(Calendar.MINUTE);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -225,28 +224,24 @@ public class AddAppointmentActivity extends AppCompatActivity {
         String appointmentTime = binding.etAppointmentTime.getText().toString().trim();
         String reason = binding.etReason.getText().toString().trim();
 
-        // Validate patient selection
         if (selectedPatient.isEmpty() || selectedPatientId == -1) {
             binding.spinnerPatient.setError("Please select a patient");
             binding.spinnerPatient.requestFocus();
             return false;
         }
 
-        // Validate date
         if (appointmentDate.isEmpty()) {
             binding.etAppointmentDate.setError(getString(R.string.required_field));
             binding.etAppointmentDate.requestFocus();
             return false;
         }
 
-        // Validate time
         if (appointmentTime.isEmpty()) {
             binding.etAppointmentTime.setError(getString(R.string.required_field));
             binding.etAppointmentTime.requestFocus();
             return false;
         }
 
-        // Validate reason
         if (reason.isEmpty()) {
             binding.etReason.setError(getString(R.string.required_field));
             binding.etReason.requestFocus();

@@ -3,7 +3,6 @@ package com.example.medimanager.fragments;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -27,6 +26,7 @@ import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.databinding.FragmentPatientsBinding;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +42,7 @@ public class PatientsFragment extends Fragment {
     private List<Patient> filteredList;
 
     private int doctorId = -1;
+    private SessionManager sessionManager;
 
     private final ActivityResultLauncher<Intent> patientFormLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -67,8 +68,8 @@ public class PatientsFragment extends Fragment {
         patientDAO = new PatientDAO(requireContext());
 
         // Load current doctor id
-        SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-        doctorId = (int) prefs.getLong(Constants.PREF_USER_ID, -1);
+        sessionManager = new SessionManager(requireContext());
+        doctorId = (int) sessionManager.getUserId();
 
         // Initialize UI
         setupRecyclerView();

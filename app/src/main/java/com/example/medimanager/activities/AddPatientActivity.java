@@ -66,9 +66,9 @@ public class AddPatientActivity extends AppCompatActivity {
     }
 
     private void checkEditMode() {
-        if (getIntent().hasExtra("PATIENT_ID")) {
+        if (getIntent().hasExtra(Constants.EXTRA_PATIENT_ID)) {
             isEditMode = true;
-            int patientId = getIntent().getIntExtra("PATIENT_ID", -1);
+            int patientId = getIntent().getIntExtra(Constants.EXTRA_PATIENT_ID, -1);
             currentPatient = patientDAO.getPatientById(patientId);
         }
     }

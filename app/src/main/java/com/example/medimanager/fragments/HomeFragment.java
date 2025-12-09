@@ -2,7 +2,6 @@ package com.example.medimanager.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +29,7 @@ import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.NotificationHelper;
+import com.example.medimanager.utils.SessionManager;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,6 +54,7 @@ public class HomeFragment extends Fragment {
     private PatientAdapter recentPatientsAdapter;
     private List<Patient> recentPatients;
     private int doctorId = -1;
+    private SessionManager sessionManager;
 
     @Nullable
     @Override
@@ -67,12 +68,12 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // Initialize DAOs
+        sessionManager = new SessionManager(requireContext());
         patientDAO = new PatientDAO(requireContext());
         appointmentDAO = new AppointmentDAO(requireContext());
         consultationDAO = new ConsultationDAO(requireContext());
         // Load current doctor id
-        SharedPreferences prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-        doctorId = (int) prefs.getLong(Constants.PREF_USER_ID, -1);
+        doctorId = (int) sessionManager.getUserId();
 
         // Initialize UI
         setupRecyclerView();
@@ -109,18 +110,18 @@ public class HomeFragment extends Fragment {
         
         if (pendingCount > 0) {
             String message = pendingCount == 1 
-                    ? "You have 1 pending appointment request" 
-                    : "You have " + pendingCount + " pending appointment requests";
+                ? getString(R.string.pending_request_single)
+                : getString(R.string.pending_request_multiple, pendingCount);
             
             new AlertDialog.Builder(requireContext())
-                    .setTitle("🔔 Pending Requests")
-                    .setMessage(message + "\n\nGo to Appointments tab and select 'Pending' to review them.")
-                    .setPositiveButton("View Now", (dialog, which) -> {
+                    .setTitle(R.string.pending_requests_title)
+                    .setMessage(message + "\n\n" + getString(R.string.pending_requests_hint))
+                    .setPositiveButton(R.string.action_view_now, (dialog, which) -> {
                         if (getActivity() instanceof MainActivity) {
                             ((MainActivity) getActivity()).navigateToAppointments();
                         }
                     })
-                    .setNegativeButton("Later", null)
+                    .setNegativeButton(R.string.action_later, null)
                     .show();
             
             hasShownPendingAlert = true; // Mark as shown for this session
@@ -153,7 +154,7 @@ public class HomeFragment extends Fragment {
                 } else {
                     // Navigate to appointment details or patient details
                     Intent intent = new Intent(requireContext(), PatientDetailsActivity.class);
-                    intent.putExtra("PATIENT_ID", appointment.getPatientId());
+                    intent.putExtra(Constants.EXTRA_PATIENT_ID, appointment.getPatientId());
                     startActivity(intent);
                 }
             }
@@ -181,7 +182,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onDeleteClick(Appointment appointment) {
                 // For dashboard, show a toast to go to Appointments tab
-                Toast.makeText(requireContext(), "Go to Appointments tab to delete", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.toast_go_to_appointments_delete), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -197,22 +198,22 @@ public class HomeFragment extends Fragment {
             @Override
             public void onItemClick(Patient patient) {
                 Intent intent = new Intent(requireContext(), PatientDetailsActivity.class);
-                intent.putExtra("PATIENT_ID", patient.getId());
+                intent.putExtra(Constants.EXTRA_PATIENT_ID, patient.getId());
                 startActivity(intent);
             }
 
             @Override
             public void onEditClick(Patient patient) {
                 Intent intent = new Intent(requireContext(), AddPatientActivity.class);
-                intent.putExtra("PATIENT_ID", patient.getId());
-                intent.putExtra("IS_EDIT_MODE", true);
+                intent.putExtra(Constants.EXTRA_PATIENT_ID, patient.getId());
+                intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
                 startActivity(intent);
             }
 
             @Override
             public void onDeleteClick(Patient patient) {
                 // For dashboard, maybe just show a toast or navigate to details
-                Toast.makeText(requireContext(), "Go to Patients tab to delete", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.toast_go_to_patients_delete), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -282,9 +283,9 @@ public class HomeFragment extends Fragment {
         // Cycle status: Scheduled -> Completed -> Scheduled
         String newStatus;
         if (appointment.isScheduled()) {
-            newStatus = "completed";
+            newStatus = Constants.STATUS_COMPLETED;
         } else {
-            newStatus = "scheduled";
+            newStatus = Constants.STATUS_SCHEDULED;
         }
 
         int result = appointmentDAO.updateAppointmentStatus(appointment.getId(), newStatus);
@@ -292,7 +293,7 @@ public class HomeFragment extends Fragment {
         if (result > 0) {
             appointment.setStatus(newStatus);
             appointmentAdapter.notifyDataSetChanged();
-            Toast.makeText(requireContext(), "Status updated", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.status_updated), Toast.LENGTH_SHORT).show();
         }
     }
 

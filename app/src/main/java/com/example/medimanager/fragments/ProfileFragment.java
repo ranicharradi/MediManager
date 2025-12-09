@@ -2,7 +2,6 @@ package com.example.medimanager.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,12 +19,13 @@ import com.example.medimanager.database.UserDAO;
 import com.example.medimanager.databinding.FragmentProfileBinding;
 import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.SessionManager;
 
 public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
-    private SharedPreferences sharedPreferences;
     private UserDAO userDAO;
+    private SessionManager sessionManager;
 
     @Nullable
     @Override
@@ -38,7 +38,7 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        sharedPreferences = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
+        sessionManager = new SessionManager(requireContext());
         userDAO = new UserDAO(requireContext());
 
         loadUserData();
@@ -57,8 +57,8 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadUserData() {
-        String email = sharedPreferences.getString(Constants.PREF_USER_EMAIL, "");
-        boolean isDoctor = sharedPreferences.getBoolean(Constants.PREF_IS_DOCTOR, true);
+        String email = sessionManager.getUserEmail();
+        boolean isDoctor = sessionManager.isDoctor();
 
         // Get user from database
         User user = userDAO.getUserByEmail(email);
@@ -79,7 +79,7 @@ public class ProfileFragment extends Fragment {
             }
         } else {
             // Fallback to stored name
-            String name = sharedPreferences.getString(Constants.PREF_USER_NAME, "User");
+            String name = sessionManager.getUserName();
             binding.doctorName.setText(name);
             binding.doctorEmail.setText(email);
         }
@@ -95,13 +95,7 @@ public class ProfileFragment extends Fragment {
         PatientHomeFragment.resetSessionFlag();
         
         // Clear login state
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean(Constants.PREF_IS_LOGGED_IN, false);
-        editor.remove(Constants.PREF_USER_EMAIL);
-        editor.remove(Constants.PREF_USER_ID);
-        editor.remove(Constants.PREF_USER_NAME);
-        editor.remove(Constants.PREF_IS_DOCTOR);
-        editor.apply();
+        sessionManager.clearSession();
 
         // Navigate to login
         Intent intent = new Intent(requireContext(), LoginActivity.class);
