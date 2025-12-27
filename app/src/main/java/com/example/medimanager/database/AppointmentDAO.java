@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.utils.Constants;
@@ -13,6 +14,7 @@ import java.util.List;
 
 public class AppointmentDAO {
     private final DatabaseHelper dbHelper;
+    private static final String TAG = "AppointmentDAO";
 
     public AppointmentDAO(Context context) {
         dbHelper = DatabaseHelper.getInstance(context);
@@ -30,7 +32,12 @@ public class AppointmentDAO {
         values.put(DatabaseHelper.KEY_STATUS, appointment.getStatus());
         values.put(DatabaseHelper.KEY_NOTES, appointment.getNotes());
 
-        return database.insert(DatabaseHelper.TABLE_APPOINTMENTS, null, values);
+        try {
+            return database.insert(DatabaseHelper.TABLE_APPOINTMENTS, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error inserting appointment", e);
+            return -1;
+        }
     }
 
     // Read - Get by ID
@@ -47,13 +54,15 @@ public class AppointmentDAO {
                 DatabaseHelper.KEY_DOCTOR_ID + " = u." + DatabaseHelper.KEY_ID +
                 " WHERE a." + DatabaseHelper.KEY_ID + " = ?";
 
-        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(id)});
-
         Appointment appointment = null;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(query, new String[]{String.valueOf(id)});
+            if (cursor.moveToFirst()) {
                 appointment = cursorToAppointment(cursor);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading appointment by id", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -80,14 +89,17 @@ public class AppointmentDAO {
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC, a." +
                 DatabaseHelper.KEY_APPOINTMENT_TIME + " DESC";
 
-            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId)});
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId)});
+
+            if (cursor.moveToFirst()) {
                 do {
                     appointments.add(cursorToAppointment(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading appointments", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -113,14 +125,16 @@ public class AppointmentDAO {
                 " WHERE a." + DatabaseHelper.KEY_PATIENT_ID + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC";
 
-        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(patientId)});
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(query, new String[]{String.valueOf(patientId)});
+            if (cursor.moveToFirst()) {
                 do {
                     appointments.add(cursorToAppointment(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading appointments by patient", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -146,14 +160,17 @@ public class AppointmentDAO {
                 " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_TIME + " ASC";
 
-            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId), today});
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId), today});
+
+            if (cursor.moveToFirst()) {
                 do {
                     appointments.add(cursorToAppointment(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading today's appointments", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -179,14 +196,17 @@ public class AppointmentDAO {
                 " WHERE a." + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND a." + DatabaseHelper.KEY_STATUS + " = ?" +
                 " ORDER BY a." + DatabaseHelper.KEY_APPOINTMENT_DATE + " DESC";
 
-            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId), status});
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(query, new String[]{String.valueOf(doctorId), status});
+
+            if (cursor.moveToFirst()) {
                 do {
                     appointments.add(cursorToAppointment(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading appointments by status", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -208,12 +228,17 @@ public class AppointmentDAO {
         values.put(DatabaseHelper.KEY_STATUS, appointment.getStatus());
         values.put(DatabaseHelper.KEY_NOTES, appointment.getNotes());
 
-        return database.update(
-                DatabaseHelper.TABLE_APPOINTMENTS,
-                values,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(appointment.getId())}
-        );
+        try {
+            return database.update(
+                    DatabaseHelper.TABLE_APPOINTMENTS,
+                    values,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(appointment.getId())}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating appointment", e);
+            return 0;
+        }
     }
 
     // Update status only
@@ -222,39 +247,52 @@ public class AppointmentDAO {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.KEY_STATUS, status);
 
-        return database.update(
-                DatabaseHelper.TABLE_APPOINTMENTS,
-                values,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
+        try {
+            return database.update(
+                    DatabaseHelper.TABLE_APPOINTMENTS,
+                    values,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(id)}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating appointment status", e);
+            return 0;
+        }
     }
 
     // Delete
     public int deleteAppointment(int id) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
-        return database.delete(
-                DatabaseHelper.TABLE_APPOINTMENTS,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
+        try {
+            return database.delete(
+                    DatabaseHelper.TABLE_APPOINTMENTS,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(id)}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting appointment", e);
+            return 0;
+        }
     }
 
     // Statistics
         public int getTodayAppointmentsCount(int doctorId, String today) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery(
-                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_APPOINTMENTS +
-                " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND " +
-                DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?",
-            new String[]{String.valueOf(doctorId), today}
-        );
-
         int count = 0;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(
+                    "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_APPOINTMENTS +
+                    " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND " +
+                    DatabaseHelper.KEY_APPOINTMENT_DATE + " = ?",
+                new String[]{String.valueOf(doctorId), today}
+            );
+
+            if (cursor.moveToFirst()) {
                 count = cursor.getInt(0);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error counting today's appointments", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -266,19 +304,22 @@ public class AppointmentDAO {
 
         public int getUpcomingAppointmentsCount(int doctorId) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery(
-                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_APPOINTMENTS +
-                " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND (" +
-                DatabaseHelper.KEY_STATUS + " = 'scheduled' OR " +
-                DatabaseHelper.KEY_STATUS + " = '" + Constants.STATUS_IN_PROGRESS + "')",
-            new String[]{String.valueOf(doctorId)}
-        );
-
         int count = 0;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(
+                    "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_APPOINTMENTS +
+                    " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ? AND (" +
+                    DatabaseHelper.KEY_STATUS + " = '" + Constants.STATUS_SCHEDULED + "' OR " +
+                    DatabaseHelper.KEY_STATUS + " = '" + Constants.STATUS_IN_PROGRESS + "')",
+                new String[]{String.valueOf(doctorId)}
+            );
+
+            if (cursor.moveToFirst()) {
                 count = cursor.getInt(0);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error counting upcoming appointments", e);
         } finally {
             if (cursor != null) {
                 cursor.close();

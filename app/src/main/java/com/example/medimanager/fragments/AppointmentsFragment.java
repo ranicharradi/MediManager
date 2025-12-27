@@ -25,6 +25,8 @@ import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.databinding.FragmentAppointmentsBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.utils.AppointmentApprovalHelper;
+import com.example.medimanager.utils.AppointmentStatusUtils;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.SessionManager;
 import com.example.medimanager.utils.NotificationHelper;
@@ -75,7 +77,7 @@ public class AppointmentsFragment extends Fragment {
         // Load current user info
         sessionManager = new SessionManager(requireContext());
         isDoctor = sessionManager.isDoctor();
-        doctorId = (int) sessionManager.getUserId();
+        doctorId = sessionManager.getUserId();
         if (!isDoctor) {
             String email = sessionManager.getUserEmail();
             Patient patient = patientDAO.getPatientByEmail(email);
@@ -117,7 +119,9 @@ public class AppointmentsFragment extends Fragment {
                     }
                 } else {
                     // Patients can only view appointment info
-                        String statusText = appointment.isPending() ? getString(R.string.pending_doctor_approval) : appointment.getStatusDisplayName();
+                        String statusText = appointment.isPending()
+                                ? getString(R.string.pending_doctor_approval)
+                                : AppointmentStatusUtils.getStatusLabel(requireContext(), appointment.getStatus());
                         String info = getString(R.string.appointment_info,
                             appointment.getReason(),
                             appointment.getAppointmentDate(),
@@ -273,26 +277,26 @@ public class AppointmentsFragment extends Fragment {
     }
 
     private void showApprovalDialog(Appointment appointment) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.pending_appointment_request)
-                .setMessage(getString(R.string.appointment_request_details,
-                        appointment.getPatientName(),
-                        appointment.getAppointmentDate(),
-                        appointment.getAppointmentTime(),
-                        appointment.getReason()))
-                .setPositiveButton(R.string.approve_appointment, (dialog, which) -> {
-                    approveAppointment(appointment);
-                })
-                .setNeutralButton(R.string.modify_and_approve, (dialog, which) -> {
-                    Intent intent = new Intent(requireContext(), AddAppointmentActivity.class);
-                    intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appointment.getId());
-                    intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
-                    addAppointmentLauncher.launch(intent);
-                })
-                .setNegativeButton(R.string.reject_appointment, (dialog, which) -> {
-                    showRejectConfirmationDialog(appointment);
-                })
-                .show();
+        AppointmentApprovalHelper.showApprovalDialog(requireContext(), appointment,
+                new AppointmentApprovalHelper.ApprovalActions() {
+                    @Override
+                    public void onApprove(Appointment appt) {
+                        approveAppointment(appt);
+                    }
+
+                    @Override
+                    public void onModify(Appointment appt) {
+                        Intent intent = new Intent(requireContext(), AddAppointmentActivity.class);
+                        intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appt.getId());
+                        intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
+                        addAppointmentLauncher.launch(intent);
+                    }
+
+                    @Override
+                    public void onReject(Appointment appt) {
+                        showRejectConfirmationDialog(appt);
+                    }
+                });
     }
 
     private void approveAppointment(Appointment appointment) {
@@ -336,7 +340,7 @@ public class AppointmentsFragment extends Fragment {
         int result = appointmentDAO.deleteAppointment(appointment.getId());
         if (result > 0) {
             loadAppointments();
-            Toast.makeText(requireContext(), "Appointment deleted", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.appointment_deleted, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(requireContext(), R.string.error_occurred, Toast.LENGTH_SHORT).show();
         }

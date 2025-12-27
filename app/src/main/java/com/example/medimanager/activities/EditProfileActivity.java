@@ -11,6 +11,7 @@ import com.example.medimanager.database.UserDAO;
 import com.example.medimanager.databinding.ActivityEditProfileBinding;
 import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.PhoneUtils;
 
 public class EditProfileActivity extends AppCompatActivity {
 
@@ -46,12 +47,7 @@ public class EditProfileActivity extends AppCompatActivity {
             binding.etLastName.setText(currentUser.getLastName());
             binding.etEmail.setText(currentUser.getEmail());
             
-            // Strip +216 prefix for phone display
-            String phone = currentUser.getPhone();
-            if (phone != null && phone.startsWith("+216 ")) {
-                phone = phone.substring(5);
-            }
-            binding.etPhone.setText(phone);
+            binding.etPhone.setText(PhoneUtils.stripPrefixForDisplay(currentUser.getPhone()));
         }
     }
 
@@ -75,9 +71,7 @@ public class EditProfileActivity extends AppCompatActivity {
             currentUser.setFirstName(firstName);
             currentUser.setLastName(lastName);
             
-            // Prepend +216 prefix to phone
-            String fullPhone = phone.isEmpty() ? "" : "+216 " + phone;
-            currentUser.setPhone(fullPhone);
+            currentUser.setPhone(PhoneUtils.formatForStorage(phone));
 
             // Save to database
             int result = userDAO.updateUser(currentUser);

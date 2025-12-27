@@ -19,6 +19,7 @@ import com.example.medimanager.databinding.ActivityAddAppointmentBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.models.User;
+import com.example.medimanager.utils.AppointmentStatusUtils;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.DateUtils;
 import com.example.medimanager.utils.DateTimePickerHelper;
@@ -69,9 +70,9 @@ public class AddAppointmentActivity extends AppCompatActivity {
 
         // Load doctor id
         boolean isDoctor = sessionManager.isDoctor();
-        doctorId = (int) sessionManager.getUserId();
+        doctorId = sessionManager.getUserId();
         if (!isDoctor || doctorId == -1) {
-            Toast.makeText(this, "Only doctors can manage appointments", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.error_doctor_only_manage_appointments, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -87,8 +88,8 @@ public class AddAppointmentActivity extends AppCompatActivity {
             // Set default values
             selectedDate = Calendar.getInstance();
             binding.etAppointmentDate.setText(DateUtils.getCurrentDate());
-            binding.etAppointmentTime.setText("09:00 AM");
-            binding.spinnerStatus.setText(Constants.STATUS_SCHEDULED, false);
+            binding.etAppointmentTime.setText(getString(R.string.default_time_9am));
+            binding.spinnerStatus.setText(getString(R.string.scheduled), false);
         }
     }
 
@@ -98,9 +99,9 @@ public class AddAppointmentActivity extends AppCompatActivity {
 
         // Status Spinner (In Progress removed - status cycles from Scheduled to Completed)
         String[] statuses = {
-                "Scheduled",
-                "Completed",
-                "Cancelled"
+                getString(R.string.scheduled),
+                getString(R.string.completed),
+                getString(R.string.cancelled)
         };
         ArrayAdapter<String> statusAdapter = new ArrayAdapter<>(
                 this,
@@ -189,7 +190,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
             binding.etReason.setText(currentAppointment.getReason());
             binding.etNotes.setText(currentAppointment.getNotes());
 
-            String status = currentAppointment.getStatusDisplayName();
+            String status = AppointmentStatusUtils.getStatusLabel(this, currentAppointment.getStatus());
             binding.spinnerStatus.setText(status, false);
 
             try {
@@ -225,7 +226,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
         String reason = binding.etReason.getText().toString().trim();
 
         if (selectedPatient.isEmpty() || selectedPatientId == -1) {
-            binding.spinnerPatient.setError("Please select a patient");
+            binding.spinnerPatient.setError(getString(R.string.error_select_patient));
             binding.spinnerPatient.requestFocus();
             return false;
         }
@@ -259,6 +260,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
 
         currentAppointment.setPatientId(selectedPatientId);
         currentAppointment.setDoctorId(doctorId);
+        currentAppointment.setPatientName(getSelectedPatientName());
         currentAppointment.setAppointmentDate(binding.etAppointmentDate.getText().toString().trim());
         currentAppointment.setAppointmentTime(binding.etAppointmentTime.getText().toString().trim());
         currentAppointment.setReason(binding.etReason.getText().toString().trim());
@@ -267,9 +269,9 @@ public class AddAppointmentActivity extends AppCompatActivity {
         // Convert status display name to database value
         String statusDisplay = binding.spinnerStatus.getText().toString();
         String status = Constants.STATUS_SCHEDULED;
-        if (statusDisplay.equals("Completed")) {
+        if (statusDisplay.equals(getString(R.string.completed))) {
             status = Constants.STATUS_COMPLETED;
-        } else if (statusDisplay.equals("Cancelled")) {
+        } else if (statusDisplay.equals(getString(R.string.cancelled))) {
             status = Constants.STATUS_CANCELLED;
         }
         currentAppointment.setStatus(status);
@@ -283,7 +285,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
             int result = appointmentDAO.updateAppointment(currentAppointment);
 
             if (result > 0) {
-                Toast.makeText(this, "Appointment updated successfully", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.appointment_updated, Toast.LENGTH_SHORT).show();
                 setResult(RESULT_OK);
                 finish();
             } else {
@@ -302,7 +304,7 @@ public class AddAppointmentActivity extends AppCompatActivity {
                 // Notify patient about the new appointment
                 UserDAO userDAO = new UserDAO(this);
                 User doctor = userDAO.getUserById(doctorId);
-                String doctorName = doctor != null ? doctor.getLastName() : "Your doctor";
+                String doctorName = doctor != null ? doctor.getLastName() : getString(R.string.your_doctor);
                 NotificationHelper.notifyPatientNewAppointment(
                         this,
                         doctorName,
@@ -352,12 +354,23 @@ public class AddAppointmentActivity extends AppCompatActivity {
                                 pendingIntent
                         );
 
-                        Toast.makeText(this, "Reminder set for 1 hour before appointment", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.reminder_set_one_hour, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
         } catch (ParseException e) {
             e.printStackTrace();
         }
+    }
+
+    private String getSelectedPatientName() {
+        if (patientList != null) {
+            for (Patient patient : patientList) {
+                if (patient.getId() == selectedPatientId) {
+                    return patient.getFullName();
+                }
+            }
+        }
+        return getString(R.string.default_patient_name);
     }
 }

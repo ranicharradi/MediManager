@@ -1,6 +1,5 @@
 package com.example.medimanager.activities;
 
-import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -13,6 +12,7 @@ import com.example.medimanager.databinding.ActivityAddConsultationBinding;
 import com.example.medimanager.models.Consultation;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.DateTimePickerHelper;
 import com.example.medimanager.utils.DateUtils;
 
 import java.text.SimpleDateFormat;
@@ -44,7 +44,7 @@ public class AddConsultationActivity extends AppCompatActivity {
         isEditMode = getIntent().getBooleanExtra(Constants.EXTRA_IS_EDIT_MODE, false);
 
         if (patientId == -1) {
-            Toast.makeText(this, "Error: Patient not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.patient_not_found, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -81,7 +81,7 @@ public class AddConsultationActivity extends AppCompatActivity {
     private void loadPatientName() {
         Patient patient = patientDAO.getPatientById(patientId);
         if (patient != null) {
-            binding.tvPatientName.setText("Patient: " + patient.getFullName());
+            binding.tvPatientName.setText(getString(R.string.patient_label, patient.getFullName()));
         } else {
             Toast.makeText(this, R.string.patient_not_found, Toast.LENGTH_SHORT).show();
             finish();
@@ -101,7 +101,7 @@ public class AddConsultationActivity extends AppCompatActivity {
     }
 
     private void showDatePicker() {
-        final Calendar calendar = Calendar.getInstance();
+        Calendar calendar = selectedDate != null ? selectedDate : Calendar.getInstance();
 
         // If editing and date exists, use it
         if (isEditMode && currentConsultation != null && currentConsultation.getConsultationDate() != null) {
@@ -113,26 +113,16 @@ public class AddConsultationActivity extends AppCompatActivity {
             }
         }
 
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
+        DateTimePickerHelper.showDatePicker(
                 this,
-                (view, year1, month1, dayOfMonth) -> {
-                    selectedDate = Calendar.getInstance();
-                    selectedDate.set(year1, month1, dayOfMonth);
-
-                    SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT, Locale.getDefault());
-                    String dateString = sdf.format(selectedDate.getTime());
-                    binding.etConsultationDate.setText(dateString);
-                },
-                year, month, day
+                calendar,
+                false,
+                true,
+                (formattedDate, selectedCalendar) -> {
+                    selectedDate = selectedCalendar;
+                    binding.etConsultationDate.setText(formattedDate);
+                }
         );
-
-        // Set max date to today
-        datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
-        datePickerDialog.show();
     }
 
     private boolean validateInputs() {

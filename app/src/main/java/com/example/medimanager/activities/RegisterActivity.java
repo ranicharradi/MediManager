@@ -15,6 +15,7 @@ import com.example.medimanager.databinding.ActivityRegisterBinding;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.PhoneUtils;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -131,9 +132,7 @@ public class RegisterActivity extends AppCompatActivity {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
-        // Prepend +216 prefix to phone number
-        String fullPhone = phone.isEmpty() ? "" : "+216 " + phone;
-        user.setPhone(fullPhone);
+        user.setPhone(PhoneUtils.formatForStorage(phone));
         user.setPassword(password);
         user.setRole(isDoctorSelected ? "doctor" : "patient");
 

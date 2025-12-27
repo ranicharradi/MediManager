@@ -1,7 +1,5 @@
 package com.example.medimanager.activities;
 
-import android.app.DatePickerDialog;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
@@ -15,6 +13,9 @@ import com.example.medimanager.databinding.ActivityAddPatientBinding;
 import com.example.medimanager.models.Patient;
 import com.example.medimanager.models.User;
 import com.example.medimanager.utils.Constants;
+import com.example.medimanager.utils.DateTimePickerHelper;
+import com.example.medimanager.utils.PhoneUtils;
+import com.example.medimanager.utils.SessionManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,6 +32,7 @@ public class AddPatientActivity extends AppCompatActivity {
     private boolean isEditMode = false;
     private Calendar selectedDate;
     private int doctorId = -1;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +45,10 @@ public class AddPatientActivity extends AppCompatActivity {
         userDAO = new UserDAO(this);
         
         // Load doctor id
-        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
-        doctorId = (int) prefs.getLong(Constants.PREF_USER_ID, -1);
+        sessionManager = new SessionManager(this);
+        doctorId = sessionManager.getUserId();
         if (doctorId == -1) {
-            Toast.makeText(this, "Unable to determine doctor account", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_no_doctor_account), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -111,38 +113,28 @@ public class AddPatientActivity extends AppCompatActivity {
     }
 
     private void showDatePicker() {
-        final Calendar calendar = Calendar.getInstance();
+        Calendar calendar = selectedDate != null ? selectedDate : Calendar.getInstance();
 
         // If editing and date exists, use it
         if (isEditMode && currentPatient != null && currentPatient.getDateOfBirth() != null) {
             try {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT, Locale.getDefault());
                 calendar.setTime(sdf.parse(currentPatient.getDateOfBirth()));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
+        DateTimePickerHelper.showDatePicker(
                 this,
-                (view, year1, month1, dayOfMonth) -> {
-                    selectedDate = Calendar.getInstance();
-                    selectedDate.set(year1, month1, dayOfMonth);
-
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                    String dateString = sdf.format(selectedDate.getTime());
-                    binding.etDateOfBirth.setText(dateString);
-                },
-                year, month, day
+                calendar,
+                false,
+                true,
+                (formattedDate, selectedCalendar) -> {
+                    selectedDate = selectedCalendar;
+                    binding.etDateOfBirth.setText(formattedDate);
+                }
         );
-
-        // Set max date to today
-        datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
-        datePickerDialog.show();
     }
 
     private boolean validateInputs() {
@@ -199,10 +191,8 @@ public class AddPatientActivity extends AppCompatActivity {
         currentPatient.setDateOfBirth(binding.etDateOfBirth.getText().toString().trim());
         currentPatient.setGender(binding.spinnerGender.getText().toString());
         
-        // Prepend +216 prefix to phone number
         String phoneInput = binding.etPhone.getText().toString().trim();
-        String fullPhone = phoneInput.isEmpty() ? "" : "+216 " + phoneInput;
-        currentPatient.setPhone(fullPhone);
+        currentPatient.setPhone(PhoneUtils.formatForStorage(phoneInput));
         
         currentPatient.setEmail(binding.etEmail.getText().toString().trim());
         currentPatient.setAddress(binding.etAddress.getText().toString().trim());
@@ -251,12 +241,7 @@ public class AddPatientActivity extends AppCompatActivity {
         binding.etDateOfBirth.setText(currentPatient.getDateOfBirth());
         binding.spinnerGender.setText(currentPatient.getGender(), false);
         
-        // Strip +216 prefix for display (it's shown as prefix in the input field)
-        String phone = currentPatient.getPhone();
-        if (phone != null && phone.startsWith("+216 ")) {
-            phone = phone.substring(5); // Remove "+216 "
-        }
-        binding.etPhone.setText(phone);
+        binding.etPhone.setText(PhoneUtils.stripPrefixForDisplay(currentPatient.getPhone()));
         
         binding.etEmail.setText(currentPatient.getEmail());
         binding.etAddress.setText(currentPatient.getAddress());

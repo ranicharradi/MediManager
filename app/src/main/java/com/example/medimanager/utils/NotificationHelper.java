@@ -32,7 +32,6 @@ public class NotificationHelper {
     }
 
     public static final String CHANNEL_ID_APPOINTMENTS = "appointments_channel";
-    public static final String CHANNEL_NAME_APPOINTMENTS = "Appointments";
 
     private static final int NOTIFICATION_ID_BASE = 2000;
 
@@ -44,10 +43,10 @@ public class NotificationHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID_APPOINTMENTS,
-                    CHANNEL_NAME_APPOINTMENTS,
+                    context.getString(R.string.notification_channel_appointments_name),
                     NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Notifications for appointment updates");
+            channel.setDescription(context.getString(R.string.notification_channel_appointments_desc));
             
             // Enable lights
             channel.enableLights(true);
@@ -79,8 +78,8 @@ public class NotificationHelper {
      * Show notification when a doctor adds a new appointment for a patient
      */
     public static void notifyPatientNewAppointment(Context context, String doctorName, String date, String time, String reason) {
-        String title = "📅 " + context.getString(R.string.new_appointment_notification);
-        String message = String.format("Dr. %s scheduled an appointment for you on %s at %s\nReason: %s",
+        String title = context.getString(R.string.new_appointment_notification);
+        String message = context.getString(R.string.notification_new_appointment_message,
                 doctorName, date, time, reason);
 
         showNotification(context, title, message, NOTIFICATION_ID_BASE + 1);
@@ -90,8 +89,8 @@ public class NotificationHelper {
      * Show notification when a patient's appointment request is approved
      */
     public static void notifyPatientAppointmentApproved(Context context, String date, String time) {
-        String title = "✅ " + context.getString(R.string.appointment_approved);
-        String message = String.format("Your appointment request for %s at %s has been approved!", date, time);
+        String title = context.getString(R.string.appointment_approved);
+        String message = context.getString(R.string.notification_request_approved_message, date, time);
 
         showNotification(context, title, message, NOTIFICATION_ID_BASE + 2);
     }
@@ -100,8 +99,8 @@ public class NotificationHelper {
      * Show notification when a patient's appointment request is rejected
      */
     public static void notifyPatientAppointmentRejected(Context context, String date, String time) {
-        String title = "❌ " + context.getString(R.string.appointment_rejected);
-        String message = String.format("Your appointment request for %s at %s has been rejected.", date, time);
+        String title = context.getString(R.string.appointment_rejected);
+        String message = context.getString(R.string.notification_request_rejected_message, date, time);
 
         showNotification(context, title, message, NOTIFICATION_ID_BASE + 3);
     }
@@ -110,8 +109,8 @@ public class NotificationHelper {
      * Show notification when a patient requests an appointment (for doctor)
      */
     public static void notifyDoctorNewRequest(Context context, String patientName, String date, String time, String reason) {
-        String title = "🔔 " + context.getString(R.string.appointment_request_notification);
-        String message = String.format("%s has requested an appointment on %s at %s\nReason: %s",
+        String title = context.getString(R.string.appointment_request_notification);
+        String message = context.getString(R.string.notification_request_message,
                 patientName, date, time, reason);
 
         showNotification(context, title, message, NOTIFICATION_ID_BASE + 4);
@@ -121,8 +120,8 @@ public class NotificationHelper {
      * Show notification when appointment is modified
      */
     public static void notifyPatientAppointmentModified(Context context, String oldDate, String newDate, String newTime) {
-        String title = "🔄 Appointment Modified";
-        String message = String.format("Your appointment has been rescheduled to %s at %s", newDate, newTime);
+        String title = context.getString(R.string.notification_appointment_modified_title);
+        String message = context.getString(R.string.notification_appointment_modified_message, oldDate, newDate, newTime);
 
         showNotification(context, title, message, NOTIFICATION_ID_BASE + 5);
     }
@@ -153,7 +152,7 @@ public class NotificationHelper {
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(message)
-                        .setSummaryText("MediManager"))
+                        .setSummaryText(context.getString(R.string.app_name)))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

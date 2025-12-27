@@ -20,6 +20,8 @@ import com.example.medimanager.databinding.ActivityPatientDetailsBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Consultation;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.utils.AppointmentApprovalHelper;
+import com.example.medimanager.utils.AppointmentStatusUtils;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.NotificationHelper;
 
@@ -64,7 +66,7 @@ public class PatientDetailsActivity extends AppCompatActivity {
         // Get patient ID from intent
         patientId = getIntent().getIntExtra(Constants.EXTRA_PATIENT_ID, -1);
         if (patientId == -1) {
-            Toast.makeText(this, "Error: Patient not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.patient_not_found, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -171,10 +173,11 @@ public class PatientDetailsActivity extends AppCompatActivity {
                     showApprovalDialog(appointment);
                 } else {
                     // Show appointment info
-                    String info = "Appointment: " + appointment.getReason() + "\n" +
-                            "Date: " + appointment.getAppointmentDate() + "\n" +
-                            "Time: " + appointment.getAppointmentTime() + "\n" +
-                            "Status: " + appointment.getStatusDisplayName();
+                    String info = getString(R.string.appointment_info,
+                            appointment.getReason(),
+                            appointment.getAppointmentDate(),
+                            appointment.getAppointmentTime(),
+                            AppointmentStatusUtils.getStatusLabel(PatientDetailsActivity.this, appointment.getStatus()));
                     Toast.makeText(PatientDetailsActivity.this, info, Toast.LENGTH_LONG).show();
                 }
             }
@@ -190,7 +193,7 @@ public class PatientDetailsActivity extends AppCompatActivity {
                     appointmentDAO.updateAppointmentStatus(appointment.getId(), newStatus);
                     appointment.setStatus(newStatus);
                     appointmentAdapter.notifyDataSetChanged();
-                    Toast.makeText(PatientDetailsActivity.this, "Status updated", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PatientDetailsActivity.this, R.string.status_updated, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -215,14 +218,18 @@ public class PatientDetailsActivity extends AppCompatActivity {
         if (patient != null) {
             // Set patient info
             binding.tvPatientName.setText(patient.getFullName());
-            binding.tvAge.setText(patient.getAge() + " years old");
-            binding.tvGender.setText(patient.getGender() != null ? patient.getGender() : "N/A");
-            binding.tvBloodGroup.setText("Blood: " + (patient.getBloodGroup() != null ? patient.getBloodGroup() : "N/A"));
-            binding.tvPhone.setText(patient.getPhone() != null ? patient.getPhone() : "No phone");
-            binding.tvEmail.setText(patient.getEmail() != null ? patient.getEmail() : "No email");
-            binding.tvLastVisit.setText("Last visit: " + (patient.getLastVisit() != null ? patient.getLastVisit() : "Never"));
+            binding.tvAge.setText(getString(R.string.age_years_full, patient.getAge()));
+            binding.tvGender.setText(patient.getGender() != null ? patient.getGender() : getString(R.string.info_not_available));
+            String bloodGroup = patient.getBloodGroup();
+            binding.tvBloodGroup.setText(getString(R.string.blood_prefix,
+                    bloodGroup != null ? bloodGroup : getString(R.string.info_not_available)));
+            binding.tvPhone.setText(patient.getPhone() != null ? patient.getPhone() : getString(R.string.no_phone));
+            binding.tvEmail.setText(patient.getEmail() != null ? patient.getEmail() : getString(R.string.no_email));
+            String lastVisit = patient.getLastVisit();
+            binding.tvLastVisit.setText(getString(R.string.last_visit_prefix,
+                    lastVisit != null ? lastVisit : getString(R.string.never)));
         } else {
-            Toast.makeText(this, "Patient not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.patient_not_found, Toast.LENGTH_SHORT).show();
             finish();
         }
     }
@@ -285,7 +292,7 @@ public class PatientDetailsActivity extends AppCompatActivity {
         int result = appointmentDAO.deleteAppointment(appointment.getId());
         if (result > 0) {
             loadAppointments();
-            Toast.makeText(this, "Appointment deleted", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.appointment_deleted, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, R.string.error_occurred, Toast.LENGTH_SHORT).show();
         }
@@ -302,26 +309,26 @@ public class PatientDetailsActivity extends AppCompatActivity {
     }
 
     private void showApprovalDialog(Appointment appointment) {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.pending_appointment_request)
-                .setMessage(getString(R.string.appointment_request_details,
-                        appointment.getPatientName(),
-                        appointment.getAppointmentDate(),
-                        appointment.getAppointmentTime(),
-                        appointment.getReason()))
-                .setPositiveButton(R.string.approve_appointment, (dialog, which) -> {
-                    approveAppointment(appointment);
-                })
-                .setNeutralButton(R.string.modify_and_approve, (dialog, which) -> {
-                    Intent intent = new Intent(PatientDetailsActivity.this, AddAppointmentActivity.class);
-                    intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appointment.getId());
-                    intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
-                    formLauncher.launch(intent);
-                })
-                .setNegativeButton(R.string.reject_appointment, (dialog, which) -> {
-                    showRejectConfirmationDialog(appointment);
-                })
-                .show();
+        AppointmentApprovalHelper.showApprovalDialog(this, appointment,
+                new AppointmentApprovalHelper.ApprovalActions() {
+                    @Override
+                    public void onApprove(Appointment appt) {
+                        approveAppointment(appt);
+                    }
+
+                    @Override
+                    public void onModify(Appointment appt) {
+                        Intent intent = new Intent(PatientDetailsActivity.this, AddAppointmentActivity.class);
+                        intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appt.getId());
+                        intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
+                        formLauncher.launch(intent);
+                    }
+
+                    @Override
+                    public void onReject(Appointment appt) {
+                        showRejectConfirmationDialog(appt);
+                    }
+                });
     }
 
     private void approveAppointment(Appointment appointment) {

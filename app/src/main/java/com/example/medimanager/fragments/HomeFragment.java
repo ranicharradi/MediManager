@@ -27,6 +27,7 @@ import com.example.medimanager.database.PatientDAO;
 import com.example.medimanager.databinding.FragmentHomeBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.utils.AppointmentApprovalHelper;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.NotificationHelper;
 import com.example.medimanager.utils.SessionManager;
@@ -73,7 +74,7 @@ public class HomeFragment extends Fragment {
         appointmentDAO = new AppointmentDAO(requireContext());
         consultationDAO = new ConsultationDAO(requireContext());
         // Load current doctor id
-        doctorId = (int) sessionManager.getUserId();
+        doctorId = sessionManager.getUserId();
 
         // Initialize UI
         setupRecyclerView();
@@ -298,26 +299,26 @@ public class HomeFragment extends Fragment {
     }
 
     private void showApprovalDialog(Appointment appointment) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.pending_appointment_request)
-                .setMessage(getString(R.string.appointment_request_details,
-                        appointment.getPatientName(),
-                        appointment.getAppointmentDate(),
-                        appointment.getAppointmentTime(),
-                        appointment.getReason()))
-                .setPositiveButton(R.string.approve_appointment, (dialog, which) -> {
-                    approveAppointment(appointment);
-                })
-                .setNeutralButton(R.string.modify_and_approve, (dialog, which) -> {
-                    Intent intent = new Intent(requireContext(), AddAppointmentActivity.class);
-                    intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appointment.getId());
-                    intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
-                    startActivity(intent);
-                })
-                .setNegativeButton(R.string.reject_appointment, (dialog, which) -> {
-                    showRejectConfirmationDialog(appointment);
-                })
-                .show();
+        AppointmentApprovalHelper.showApprovalDialog(requireContext(), appointment,
+                new AppointmentApprovalHelper.ApprovalActions() {
+                    @Override
+                    public void onApprove(Appointment appt) {
+                        approveAppointment(appt);
+                    }
+
+                    @Override
+                    public void onModify(Appointment appt) {
+                        Intent intent = new Intent(requireContext(), AddAppointmentActivity.class);
+                        intent.putExtra(Constants.EXTRA_APPOINTMENT_ID, appt.getId());
+                        intent.putExtra(Constants.EXTRA_IS_EDIT_MODE, true);
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onReject(Appointment appt) {
+                        showRejectConfirmationDialog(appt);
+                    }
+                });
     }
 
     private void approveAppointment(Appointment appointment) {

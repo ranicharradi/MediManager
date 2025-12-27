@@ -43,8 +43,8 @@ public class AppointmentNotificationReceiver extends BroadcastReceiver {
 
     private void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Appointment Reminders";
-            String description = "Channel for appointment reminder notifications";
+            CharSequence name = context.getString(R.string.notification_channel_appointment_reminders);
+            String description = context.getString(R.string.notification_channel_appointment_reminders_desc);
             int importance = NotificationManager.IMPORTANCE_HIGH; // High importance for heads-up
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
@@ -79,17 +79,17 @@ public class AppointmentNotificationReceiver extends BroadcastReceiver {
         // Get default notification sound
         Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         
-        String contentText = "You have an appointment with " + patientName + " at " + appointmentTime;
+        String contentText = context.getString(R.string.notification_appointment_reminder_content, patientName, appointmentTime);
 
         // Build notification with enhanced visibility
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notifications)
-                .setContentTitle("📅 Appointment Reminder")
+                .setContentTitle(context.getString(R.string.notification_appointment_reminder_title))
                 .setContentText(contentText)
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(contentText)
-                        .setBigContentTitle("📅 Upcoming Appointment")
-                        .setSummaryText("MediManager"))
+                        .setBigContentTitle(context.getString(R.string.notification_upcoming_appointment_title))
+                        .setSummaryText(context.getString(R.string.app_name)))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

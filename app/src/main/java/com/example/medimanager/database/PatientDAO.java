@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.medimanager.models.Patient;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 public class PatientDAO {
     private final DatabaseHelper dbHelper;
+    private static final String TAG = "PatientDAO";
 
     public PatientDAO(Context context) {
         dbHelper = DatabaseHelper.getInstance(context);
@@ -36,25 +38,33 @@ public class PatientDAO {
         values.put(DatabaseHelper.KEY_ALLERGIES, patient.getAllergies());
         values.put(DatabaseHelper.KEY_LAST_VISIT, patient.getLastVisit());
 
-        return database.insert(DatabaseHelper.TABLE_PATIENTS, null, values);
+        try {
+            return database.insert(DatabaseHelper.TABLE_PATIENTS, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error inserting patient", e);
+            return -1;
+        }
     }
 
     // Read - Get by ID
     public Patient getPatientById(int id) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(id)},
-                null, null, null
-        );
-
         Patient patient = null;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    null,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(id)},
+                    null, null, null
+            );
+
+            if (cursor.moveToFirst()) {
                 patient = cursorToPatient(cursor);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading patient by id", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -68,22 +78,25 @@ public class PatientDAO {
     public List<Patient> getAllPatients(int doctorId) {
         List<Patient> patients = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-            DatabaseHelper.TABLE_PATIENTS,
-            null,
-            DatabaseHelper.KEY_DOCTOR_ID + " = ?",
-            new String[]{String.valueOf(doctorId)},
-            null,
-            null,
-            DatabaseHelper.KEY_FIRST_NAME + " ASC"
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                DatabaseHelper.TABLE_PATIENTS,
+                null,
+                DatabaseHelper.KEY_DOCTOR_ID + " = ?",
+                new String[]{String.valueOf(doctorId)},
+                null,
+                null,
+                DatabaseHelper.KEY_FIRST_NAME + " ASC"
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     patients.add(cursorToPatient(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading patients", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -100,23 +113,26 @@ public class PatientDAO {
         String selection = DatabaseHelper.KEY_DOCTOR_ID + " = ?";
         String[] selectionArgs = new String[]{String.valueOf(doctorId)};
 
-        Cursor cursor = database.query(
-            DatabaseHelper.TABLE_PATIENTS,
-            null,
-            selection,
-            selectionArgs,
-            null,
-            null,
-            DatabaseHelper.KEY_CREATED_AT + " DESC",
-            String.valueOf(limit)
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                DatabaseHelper.TABLE_PATIENTS,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                DatabaseHelper.KEY_CREATED_AT + " DESC",
+                String.valueOf(limit)
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     patients.add(cursorToPatient(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading recent patients", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -139,18 +155,21 @@ public class PatientDAO {
             "%" + query + "%"
         };
 
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null, selection, selectionArgs, null, null,
-                DatabaseHelper.KEY_FIRST_NAME + " ASC"
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    null, selection, selectionArgs, null, null,
+                    DatabaseHelper.KEY_FIRST_NAME + " ASC"
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     patients.add(cursorToPatient(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error searching patients", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -163,19 +182,22 @@ public class PatientDAO {
     // Read - Get patient by email
     public Patient getPatientByEmail(String email) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null,
-                DatabaseHelper.KEY_EMAIL + " = ?",
-                new String[]{email},
-                null, null, null
-        );
-
         Patient patient = null;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    null,
+                    DatabaseHelper.KEY_EMAIL + " = ?",
+                    new String[]{email},
+                    null, null, null
+            );
+
+            if (cursor.moveToFirst()) {
                 patient = cursorToPatient(cursor);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading patient by email", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -188,19 +210,22 @@ public class PatientDAO {
     // Read - Get patient by user_id (for linking patient user accounts)
     public Patient getPatientByUserId(int userId) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null,
-                DatabaseHelper.KEY_USER_ID + " = ?",
-                new String[]{String.valueOf(userId)},
-                null, null, null
-        );
-
         Patient patient = null;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    null,
+                    DatabaseHelper.KEY_USER_ID + " = ?",
+                    new String[]{String.valueOf(userId)},
+                    null, null, null
+            );
+
+            if (cursor.moveToFirst()) {
                 patient = cursorToPatient(cursor);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading patient by user id", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -231,12 +256,17 @@ public class PatientDAO {
         values.put(DatabaseHelper.KEY_ALLERGIES, patient.getAllergies());
         values.put(DatabaseHelper.KEY_LAST_VISIT, patient.getLastVisit());
 
-        return database.update(
-                DatabaseHelper.TABLE_PATIENTS,
-                values,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(patient.getId())}
-        );
+        try {
+            return database.update(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    values,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(patient.getId())}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating patient", e);
+            return 0;
+        }
     }
 
     // Update last visit
@@ -245,38 +275,51 @@ public class PatientDAO {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.KEY_LAST_VISIT, lastVisit);
 
-        return database.update(
-                DatabaseHelper.TABLE_PATIENTS,
-                values,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(patientId)}
-        );
+        try {
+            return database.update(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    values,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(patientId)}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating last visit", e);
+            return 0;
+        }
     }
 
     // Delete
     public int deletePatient(int id) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
-        return database.delete(
-                DatabaseHelper.TABLE_PATIENTS,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
+        try {
+            return database.delete(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(id)}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting patient", e);
+            return 0;
+        }
     }
 
     // Statistics
     public int getTotalPatientsCount(int doctorId) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery(
-                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_PATIENTS +
-                        " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ?",
-                new String[]{String.valueOf(doctorId)}
-        );
-
         int count = 0;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(
+                    "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_PATIENTS +
+                            " WHERE " + DatabaseHelper.KEY_DOCTOR_ID + " = ?",
+                    new String[]{String.valueOf(doctorId)}
+            );
+
+            if (cursor.moveToFirst()) {
                 count = cursor.getInt(0);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error counting patients", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -289,22 +332,25 @@ public class PatientDAO {
     public List<Patient> getPatientsByDoctor(int doctorId) {
         List<Patient> patients = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_PATIENTS,
-                null,
-                DatabaseHelper.KEY_DOCTOR_ID + " = ?",
-                new String[]{String.valueOf(doctorId)},
-                null,
-                null,
-                DatabaseHelper.KEY_FIRST_NAME + " ASC"
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_PATIENTS,
+                    null,
+                    DatabaseHelper.KEY_DOCTOR_ID + " = ?",
+                    new String[]{String.valueOf(doctorId)},
+                    null,
+                    null,
+                    DatabaseHelper.KEY_FIRST_NAME + " ASC"
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     patients.add(cursorToPatient(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading patients by doctor", e);
         } finally {
             if (cursor != null) {
                 cursor.close();

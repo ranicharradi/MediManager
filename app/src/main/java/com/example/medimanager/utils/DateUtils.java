@@ -1,5 +1,9 @@
 package com.example.medimanager.utils;
 
+import android.content.Context;
+
+import com.example.medimanager.R;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -169,7 +173,7 @@ public class DateUtils {
     /**
      * Get time ago string (e.g., "2 days ago")
      */
-    public static String getTimeAgo(String dateString) {
+    public static String getTimeAgo(Context context, String dateString) {
         Date date = parseDate(dateString);
         if (date == null) {
             return "";
@@ -188,19 +192,19 @@ public class DateUtils {
         long years = days / 365;
 
         if (years > 0) {
-            return years + (years == 1 ? " year ago" : " years ago");
+            return context.getResources().getQuantityString(R.plurals.time_ago_years, (int) years, years);
         } else if (months > 0) {
-            return months + (months == 1 ? " month ago" : " months ago");
+            return context.getResources().getQuantityString(R.plurals.time_ago_months, (int) months, months);
         } else if (weeks > 0) {
-            return weeks + (weeks == 1 ? " week ago" : " weeks ago");
+            return context.getResources().getQuantityString(R.plurals.time_ago_weeks, (int) weeks, weeks);
         } else if (days > 0) {
-            return days + (days == 1 ? " day ago" : " days ago");
+            return context.getResources().getQuantityString(R.plurals.time_ago_days, (int) days, days);
         } else if (hours > 0) {
-            return hours + (hours == 1 ? " hour ago" : " hours ago");
+            return context.getResources().getQuantityString(R.plurals.time_ago_hours, (int) hours, hours);
         } else if (minutes > 0) {
-            return minutes + (minutes == 1 ? " minute ago" : " minutes ago");
+            return context.getResources().getQuantityString(R.plurals.time_ago_minutes, (int) minutes, minutes);
         } else {
-            return "Just now";
+            return context.getString(R.string.just_now);
         }
     }
 

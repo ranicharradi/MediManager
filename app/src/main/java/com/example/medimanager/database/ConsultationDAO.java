@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.medimanager.models.Consultation;
 
@@ -13,6 +14,7 @@ import java.util.List;
 public class ConsultationDAO {
 
     private final DatabaseHelper dbHelper;
+    private static final String TAG = "ConsultationDAO";
 
     public ConsultationDAO(Context context) {
         dbHelper = DatabaseHelper.getInstance(context);
@@ -29,25 +31,33 @@ public class ConsultationDAO {
         values.put(DatabaseHelper.KEY_PRESCRIPTION, consultation.getPrescription());
         values.put(DatabaseHelper.KEY_NOTES, consultation.getNotes());
 
-        return database.insert(DatabaseHelper.TABLE_CONSULTATIONS, null, values);
+        try {
+            return database.insert(DatabaseHelper.TABLE_CONSULTATIONS, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error inserting consultation", e);
+            return -1;
+        }
     }
 
     // Read - Get consultation by ID
     public Consultation getConsultationById(int id) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                null,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(id)},
-                null, null, null
-        );
-
         Consultation consultation = null;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    null,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(id)},
+                    null, null, null
+            );
+
+            if (cursor.moveToFirst()) {
                 consultation = cursorToConsultation(cursor);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading consultation by id", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -61,21 +71,24 @@ public class ConsultationDAO {
     public List<Consultation> getConsultationsByPatient(int patientId) {
         List<Consultation> consultations = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                null,
-                DatabaseHelper.KEY_PATIENT_ID + " = ?",
-                new String[]{String.valueOf(patientId)},
-                null, null,
-                DatabaseHelper.KEY_CONSULTATION_DATE + " DESC"
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    null,
+                    DatabaseHelper.KEY_PATIENT_ID + " = ?",
+                    new String[]{String.valueOf(patientId)},
+                    null, null,
+                    DatabaseHelper.KEY_CONSULTATION_DATE + " DESC"
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     consultations.add(cursorToConsultation(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading consultations by patient", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -89,18 +102,21 @@ public class ConsultationDAO {
     public List<Consultation> getAllConsultations() {
         List<Consultation> consultations = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                null, null, null, null, null,
-                DatabaseHelper.KEY_CONSULTATION_DATE + " DESC"
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    null, null, null, null, null,
+                    DatabaseHelper.KEY_CONSULTATION_DATE + " DESC"
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     consultations.add(cursorToConsultation(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading consultations", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -114,21 +130,24 @@ public class ConsultationDAO {
     public List<Consultation> getConsultationsByDate(String date) {
         List<Consultation> consultations = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                null,
-                DatabaseHelper.KEY_CONSULTATION_DATE + " = ?",
-                new String[]{date},
-                null, null,
-                DatabaseHelper.KEY_CREATED_AT + " DESC"
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    null,
+                    DatabaseHelper.KEY_CONSULTATION_DATE + " = ?",
+                    new String[]{date},
+                    null, null,
+                    DatabaseHelper.KEY_CREATED_AT + " DESC"
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     consultations.add(cursorToConsultation(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading consultations by date", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -149,22 +168,32 @@ public class ConsultationDAO {
         values.put(DatabaseHelper.KEY_PRESCRIPTION, consultation.getPrescription());
         values.put(DatabaseHelper.KEY_NOTES, consultation.getNotes());
 
-        return database.update(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                values,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(consultation.getId())}
-        );
+        try {
+            return database.update(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    values,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(consultation.getId())}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating consultation", e);
+            return 0;
+        }
     }
 
     // Delete - Delete consultation by ID
     public int deleteConsultation(int id) {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
-        return database.delete(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                DatabaseHelper.KEY_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
+        try {
+            return database.delete(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    DatabaseHelper.KEY_ID + " = ?",
+                    new String[]{String.valueOf(id)}
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting consultation", e);
+            return 0;
+        }
     }
 
     // Statistics - Get monthly consultations count
@@ -174,13 +203,15 @@ public class ConsultationDAO {
                 " WHERE strftime('%Y-%m', " + DatabaseHelper.KEY_CONSULTATION_DATE +
                 ") = strftime('%Y-%m', 'now')";
 
-        Cursor cursor = database.rawQuery(query, null);
-
         int count = 0;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(query, null);
+            if (cursor.moveToFirst()) {
                 count = cursor.getInt(0);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error counting monthly consultations", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -193,16 +224,18 @@ public class ConsultationDAO {
     // Statistics - Get total consultations count
     public int getTotalConsultationsCount() {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery(
-                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_CONSULTATIONS,
-                null
-        );
-
         int count = 0;
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.rawQuery(
+                    "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_CONSULTATIONS,
+                    null
+            );
+            if (cursor.moveToFirst()) {
                 count = cursor.getInt(0);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error counting total consultations", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -216,19 +249,22 @@ public class ConsultationDAO {
     public List<Consultation> getRecentConsultations(int limit) {
         List<Consultation> consultations = new ArrayList<>();
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                null, null, null, null, null,
-                DatabaseHelper.KEY_CONSULTATION_DATE + " DESC",
-                String.valueOf(limit)
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    null, null, null, null, null,
+                    DatabaseHelper.KEY_CONSULTATION_DATE + " DESC",
+                    String.valueOf(limit)
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     consultations.add(cursorToConsultation(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading recent consultations", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -245,18 +281,21 @@ public class ConsultationDAO {
         String selection = DatabaseHelper.KEY_DIAGNOSIS + " LIKE ?";
         String[] selectionArgs = new String[]{"%" + query + "%"};
 
-        Cursor cursor = database.query(
-                DatabaseHelper.TABLE_CONSULTATIONS,
-                null, selection, selectionArgs, null, null,
-                DatabaseHelper.KEY_CONSULTATION_DATE + " DESC"
-        );
-
+        Cursor cursor = null;
         try {
-            if (cursor != null && cursor.moveToFirst()) {
+            cursor = database.query(
+                    DatabaseHelper.TABLE_CONSULTATIONS,
+                    null, selection, selectionArgs, null, null,
+                    DatabaseHelper.KEY_CONSULTATION_DATE + " DESC"
+            );
+
+            if (cursor.moveToFirst()) {
                 do {
                     consultations.add(cursorToConsultation(cursor));
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error searching consultations by diagnosis", e);
         } finally {
             if (cursor != null) {
                 cursor.close();

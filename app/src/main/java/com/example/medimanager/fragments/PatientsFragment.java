@@ -69,7 +69,7 @@ public class PatientsFragment extends Fragment {
 
         // Load current doctor id
         sessionManager = new SessionManager(requireContext());
-        doctorId = (int) sessionManager.getUserId();
+        doctorId = sessionManager.getUserId();
 
         // Initialize UI
         setupRecyclerView();
@@ -175,7 +175,7 @@ public class PatientsFragment extends Fragment {
             if (searchQuery.isEmpty()) {
                 binding.tvEmptyState.setText(R.string.no_patients_found);
             } else {
-                binding.tvEmptyState.setText("No patients found for \"" + searchQuery + "\"");
+                binding.tvEmptyState.setText(getString(R.string.no_patients_found_for, searchQuery));
             }
         } else {
             binding.rvPatients.setVisibility(View.VISIBLE);

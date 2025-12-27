@@ -4,12 +4,15 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.medimanager.models.User;
+import com.example.medimanager.utils.PasswordUtils;
 
 public class UserDAO {
 
     private final DatabaseHelper dbHelper;
+    private static final String TAG = "UserDAO";
 
     public UserDAO(Context context) {
         dbHelper = DatabaseHelper.getInstance(context);
@@ -29,12 +32,16 @@ public class UserDAO {
         values.put(DatabaseHelper.KEY_USER_FIRST_NAME, user.getFirstName());
         values.put(DatabaseHelper.KEY_USER_LAST_NAME, user.getLastName());
         values.put(DatabaseHelper.KEY_USER_EMAIL, user.getEmail());
-        values.put(DatabaseHelper.KEY_USER_PASSWORD, user.getPassword());
+        values.put(DatabaseHelper.KEY_USER_PASSWORD, PasswordUtils.hashPassword(user.getPassword()));
         values.put(DatabaseHelper.KEY_USER_ROLE, user.getRole());
         values.put(DatabaseHelper.KEY_USER_PHONE, user.getPhone());
 
-        long id = db.insert(DatabaseHelper.TABLE_USERS, null, values);
-        return id;
+        try {
+            return db.insert(DatabaseHelper.TABLE_USERS, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error registering user", e);
+            return -1;
+        }
     }
 
     /**
@@ -44,24 +51,37 @@ public class UserDAO {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         String selection = DatabaseHelper.KEY_USER_EMAIL + " = ? AND " +
-                DatabaseHelper.KEY_USER_PASSWORD + " = ? AND " +
                 DatabaseHelper.KEY_USER_ROLE + " = ?";
-        String[] selectionArgs = {email, password, role};
-
-        Cursor cursor = db.query(
-                DatabaseHelper.TABLE_USERS,
-                null,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                null
-        );
+        String[] selectionArgs = {email, role};
 
         User user = null;
-        if (cursor != null && cursor.moveToFirst()) {
-            user = cursorToUser(cursor);
-            cursor.close();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_USERS,
+                    null,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor.moveToFirst()) {
+                String storedPassword = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.KEY_USER_PASSWORD));
+                if (PasswordUtils.verifyPassword(password, storedPassword)) {
+                    user = cursorToUser(cursor);
+                    if (!PasswordUtils.isHashed(storedPassword)) {
+                        updateUserPassword(user.getId(), PasswordUtils.hashPassword(password));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error authenticating user", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
 
         return user;
@@ -76,22 +96,27 @@ public class UserDAO {
         String selection = DatabaseHelper.KEY_USER_EMAIL + " = ?";
         String[] selectionArgs = {email};
 
-        Cursor cursor = db.query(
-                DatabaseHelper.TABLE_USERS,
-                new String[]{DatabaseHelper.KEY_ID},
-                selection,
-                selectionArgs,
-                null,
-                null,
-                null
-        );
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_USERS,
+                    new String[]{DatabaseHelper.KEY_ID},
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
+            );
 
-        boolean exists = cursor != null && cursor.getCount() > 0;
-        if (cursor != null) {
-            cursor.close();
+            return cursor.getCount() > 0;
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking email registration", e);
+            return false;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
-
-        return exists;
     }
 
     /**
@@ -103,20 +128,28 @@ public class UserDAO {
         String selection = DatabaseHelper.KEY_ID + " = ?";
         String[] selectionArgs = {String.valueOf(id)};
 
-        Cursor cursor = db.query(
-                DatabaseHelper.TABLE_USERS,
-                null,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                null
-        );
-
         User user = null;
-        if (cursor != null && cursor.moveToFirst()) {
-            user = cursorToUser(cursor);
-            cursor.close();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_USERS,
+                    null,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor.moveToFirst()) {
+                user = cursorToUser(cursor);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading user by id", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
 
         return user;
@@ -131,20 +164,28 @@ public class UserDAO {
         String selection = DatabaseHelper.KEY_USER_EMAIL + " = ?";
         String[] selectionArgs = {email};
 
-        Cursor cursor = db.query(
-                DatabaseHelper.TABLE_USERS,
-                null,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                null
-        );
-
         User user = null;
-        if (cursor != null && cursor.moveToFirst()) {
-            user = cursorToUser(cursor);
-            cursor.close();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    DatabaseHelper.TABLE_USERS,
+                    null,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor.moveToFirst()) {
+                user = cursorToUser(cursor);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading user by email", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
 
         return user;
@@ -164,7 +205,26 @@ public class UserDAO {
         String whereClause = DatabaseHelper.KEY_ID + " = ?";
         String[] whereArgs = {String.valueOf(user.getId())};
 
-        return db.update(DatabaseHelper.TABLE_USERS, values, whereClause, whereArgs);
+        try {
+            return db.update(DatabaseHelper.TABLE_USERS, values, whereClause, whereArgs);
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating user", e);
+            return 0;
+        }
+    }
+
+    private void updateUserPassword(long userId, String hashedPassword) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.KEY_USER_PASSWORD, hashedPassword);
+
+        String whereClause = DatabaseHelper.KEY_ID + " = ?";
+        String[] whereArgs = {String.valueOf(userId)};
+        try {
+            db.update(DatabaseHelper.TABLE_USERS, values, whereClause, whereArgs);
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating password", e);
+        }
     }
 
     /**

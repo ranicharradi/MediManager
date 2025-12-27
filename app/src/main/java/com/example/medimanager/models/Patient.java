@@ -203,11 +203,6 @@ public class Patient implements Serializable {
         return 0;
     }
 
-    public String getAgeString() {
-        int age = getAge();
-        return age + "y";
-    }
-
     @Override
     public String toString() {
         return "Patient{" +

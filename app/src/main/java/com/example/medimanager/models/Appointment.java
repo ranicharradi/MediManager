@@ -2,6 +2,8 @@ package com.example.medimanager.models;
 
 import java.io.Serializable;
 
+import com.example.medimanager.utils.Constants;
+
 public class Appointment implements Serializable {
     private int id;
     private int patientId;
@@ -126,40 +128,31 @@ public class Appointment implements Serializable {
 
     // Helper Methods
     public boolean isPending() {
-        return "pending".equalsIgnoreCase(status);
+        return Constants.STATUS_PENDING.equalsIgnoreCase(status);
     }
 
     public boolean isScheduled() {
-        return "scheduled".equalsIgnoreCase(status);
+        return Constants.STATUS_SCHEDULED.equalsIgnoreCase(status);
     }
 
     public boolean isInProgress() {
-        return "in_progress".equalsIgnoreCase(status);
+        return Constants.STATUS_IN_PROGRESS.equalsIgnoreCase(status);
     }
 
     public boolean isCompleted() {
-        return "completed".equalsIgnoreCase(status);
+        return Constants.STATUS_COMPLETED.equalsIgnoreCase(status);
     }
 
     public boolean isCancelled() {
-        return "cancelled".equalsIgnoreCase(status);
+        return Constants.STATUS_CANCELLED.equalsIgnoreCase(status);
     }
 
     public String getStatusDisplayName() {
-        if (status == null) return "Scheduled";
-
-        switch (status.toLowerCase()) {
-            case "pending":
-                return "Pending";
-            case "in_progress":
-                return "In Progress";
-            case "completed":
-                return "Completed";
-            case "cancelled":
-                return "Cancelled";
-            default:
-                return "Scheduled";
+        if (status == null) {
+            return Constants.STATUS_SCHEDULED;
         }
+
+        return status;
     }
 
     @Override

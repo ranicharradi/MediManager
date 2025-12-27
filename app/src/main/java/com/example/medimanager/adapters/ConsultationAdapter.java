@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.medimanager.R;
 import com.example.medimanager.databinding.ItemConsultationBinding;
 import com.example.medimanager.models.Consultation;
 import com.example.medimanager.utils.DateUtils;
@@ -81,7 +82,7 @@ public class ConsultationAdapter extends RecyclerView.Adapter<ConsultationAdapte
             if (diagnosis != null && !diagnosis.isEmpty()) {
                 binding.tvDiagnosis.setText(diagnosis);
             } else {
-                binding.tvDiagnosis.setText("No diagnosis");
+                binding.tvDiagnosis.setText(context.getString(R.string.no_diagnosis));
             }
 
             // Set treatment
@@ -89,11 +90,11 @@ public class ConsultationAdapter extends RecyclerView.Adapter<ConsultationAdapte
             if (treatment != null && !treatment.isEmpty()) {
                 binding.tvTreatment.setText(treatment);
             } else {
-                binding.tvTreatment.setText("No treatment specified");
+                binding.tvTreatment.setText(context.getString(R.string.no_treatment_specified));
             }
 
             // Set time ago
-            String timeAgo = DateUtils.getTimeAgo(consultation.getConsultationDate());
+            String timeAgo = DateUtils.getTimeAgo(context, consultation.getConsultationDate());
             binding.tvTimeAgo.setText(timeAgo);
 
             // Click listeners

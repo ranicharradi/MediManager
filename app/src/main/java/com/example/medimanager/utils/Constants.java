@@ -24,8 +24,6 @@ public class Constants {
     // Preferences
     public static final String PREFS_NAME = "MediManagerPrefs";
     public static final String PREF_NOTIFICATIONS_ENABLED = "notifications_enabled";
-    public static final String PREF_FIRST_LAUNCH = "first_launch";
-    public static final String PREF_DARK_MODE = "dark_mode";
     public static final String PREF_IS_LOGGED_IN = "is_logged_in";
     public static final String PREF_IS_DOCTOR = "is_doctor";
     public static final String PREF_USER_EMAIL = "user_email";
@@ -33,12 +31,7 @@ public class Constants {
     public static final String PREF_USER_NAME = "user_name";
 
     // Validation
-    public static final int MIN_PHONE_LENGTH = 10;
     public static final int MIN_PASSWORD_LENGTH = 6;
-
-    // Database
-    public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_NAME = "medimanager.db";
 
     // Private constructor to prevent instantiation
     private Constants() {

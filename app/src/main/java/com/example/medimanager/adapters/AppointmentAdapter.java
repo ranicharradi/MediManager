@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.medimanager.R;
 import com.example.medimanager.databinding.ItemAppointmentBinding;
 import com.example.medimanager.models.Appointment;
+import com.example.medimanager.utils.AppointmentStatusUtils;
 
 import java.util.List;
 
@@ -122,7 +123,7 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
             }
 
             // Set status with color
-            String status = appointment.getStatusDisplayName();
+            String status = AppointmentStatusUtils.getStatusLabel(context, appointment.getStatus());
             binding.tvStatus.setText(status);
 
             // Set status background color and text color based on status

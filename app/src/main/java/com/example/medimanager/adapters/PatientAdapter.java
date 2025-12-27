@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.medimanager.R;
 import com.example.medimanager.databinding.ItemPatientBinding;
 import com.example.medimanager.models.Patient;
 
@@ -97,7 +98,7 @@ public class PatientAdapter extends RecyclerView.Adapter<PatientAdapter.PatientV
             binding.tvAvatar.setBackgroundColor(getRandomAvatarColor());
 
             // Set age
-            binding.tvAge.setText(patient.getAgeString());
+            binding.tvAge.setText(context.getString(R.string.age_years_short, patient.getAge()));
 
             // Set gender
             binding.tvGender.setText(patient.getGender() != null ? patient.getGender() : "");

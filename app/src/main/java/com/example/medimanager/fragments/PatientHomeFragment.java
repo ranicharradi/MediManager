@@ -24,6 +24,7 @@ import com.example.medimanager.databinding.FragmentPatientHomeBinding;
 import com.example.medimanager.models.Appointment;
 import com.example.medimanager.models.Consultation;
 import com.example.medimanager.models.Patient;
+import com.example.medimanager.utils.AppointmentStatusUtils;
 import com.example.medimanager.utils.Constants;
 import com.example.medimanager.utils.DateTimePickerHelper;
 import com.example.medimanager.utils.NotificationHelper;
@@ -51,7 +52,7 @@ public class PatientHomeFragment extends Fragment {
     private List<Appointment> upcomingAppointments;
     private List<Consultation> recentConsultations;
 
-    private long patientId = -1;
+    private int patientId = -1;
     private int doctorId = -1;
     private String patientName = "";
     private SessionManager sessionManager;
@@ -89,7 +90,7 @@ public class PatientHomeFragment extends Fragment {
     }
 
     private void loadUserInfo() {
-        long userId = sessionManager.getUserId();
+        int userId = sessionManager.getUserId();
         patientName = sessionManager.getUserName();
         if (patientName == null || patientName.isEmpty()) {
             patientName = getString(R.string.default_patient_name);
@@ -97,7 +98,7 @@ public class PatientHomeFragment extends Fragment {
 
         // Find the patient record linked to this user account via user_id
         if (userId != -1) {
-            Patient patient = patientDAO.getPatientByUserId((int) userId);
+            Patient patient = patientDAO.getPatientByUserId(userId);
             if (patient != null) {
                 patientId = patient.getId();
                 doctorId = patient.getDoctorId(); // Get the assigned doctor
@@ -125,7 +126,7 @@ public class PatientHomeFragment extends Fragment {
                     appointment.getReason(),
                     appointment.getAppointmentDate(),
                     appointment.getAppointmentTime(),
-                    appointment.getStatusDisplayName());
+                    AppointmentStatusUtils.getStatusLabel(requireContext(), appointment.getStatus()));
                 Toast.makeText(requireContext(), info, Toast.LENGTH_LONG).show();
             }
 
@@ -243,7 +244,7 @@ public class PatientHomeFragment extends Fragment {
 
     private void submitAppointmentRequest(String date, String time, String reason, String notes) {
         Appointment appointment = new Appointment();
-        appointment.setPatientId((int) patientId);
+        appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setAppointmentDate(date);
         appointment.setAppointmentTime(time);
@@ -265,15 +266,15 @@ public class PatientHomeFragment extends Fragment {
     private void loadPatientData() {
         if (patientId == -1) {
             // No linked patient record found
-            binding.tvMyAppointments.setText("0");
-            binding.tvMyConsultations.setText("0");
+            binding.tvMyAppointments.setText(String.valueOf(0));
+            binding.tvMyConsultations.setText(String.valueOf(0));
             binding.tvNoAppointments.setVisibility(View.VISIBLE);
             binding.tvNoConsultations.setVisibility(View.VISIBLE);
             return;
         }
 
         // Load appointments for this patient
-        List<Appointment> appointments = appointmentDAO.getAppointmentsByPatient((int) patientId);
+        List<Appointment> appointments = appointmentDAO.getAppointmentsByPatient(patientId);
         upcomingAppointments.clear();
 
         // Filter to only show upcoming (scheduled or pending) appointments
@@ -295,7 +296,7 @@ public class PatientHomeFragment extends Fragment {
         }
 
         // Load consultations for this patient
-        List<Consultation> consultations = consultationDAO.getConsultationsByPatient((int) patientId);
+        List<Consultation> consultations = consultationDAO.getConsultationsByPatient(patientId);
         recentConsultations.clear();
 
         // Show last 5 consultations
@@ -337,7 +338,7 @@ public class PatientHomeFragment extends Fragment {
         
         if (patientId == -1) return;
 
-        List<Appointment> appointments = appointmentDAO.getAppointmentsByPatient((int) patientId);
+        List<Appointment> appointments = appointmentDAO.getAppointmentsByPatient(patientId);
         
         int scheduledCount = 0;
         int pendingCount = 0;
@@ -347,13 +348,11 @@ public class PatientHomeFragment extends Fragment {
             if (apt.isScheduled()) {
                 scheduledCount++;
                 if (scheduledCount <= 3) { // Show up to 3 appointments in detail
-                    scheduledDetails.append("• ")
-                            .append(apt.getAppointmentDate())
-                            .append(" at ")
-                            .append(apt.getAppointmentTime())
-                            .append(" - ")
-                            .append(apt.getReason())
-                            .append("\n");
+                    String detailLine = getString(R.string.appointment_summary_line,
+                            apt.getAppointmentDate(),
+                            apt.getAppointmentTime(),
+                            apt.getReason());
+                    scheduledDetails.append(detailLine).append("\n");
                 }
             } else if (apt.isPending()) {
                 pendingCount++;
@@ -364,28 +363,27 @@ public class PatientHomeFragment extends Fragment {
         StringBuilder message = new StringBuilder();
         
         if (scheduledCount > 0) {
-            message.append("✅ You have ").append(scheduledCount)
-                    .append(" scheduled appointment").append(scheduledCount > 1 ? "s" : "")
-                    .append(":\n\n")
-                    .append(scheduledDetails);
+            message.append(getString(R.string.pending_summary_scheduled,
+                    scheduledCount,
+                    scheduledDetails.toString()));
             if (scheduledCount > 3) {
-                message.append("...and ").append(scheduledCount - 3).append(" more\n");
+                message.append(getString(R.string.pending_summary_more, scheduledCount - 3)).append("\n");
             }
         }
         
         if (pendingCount > 0) {
-            if (message.length() > 0) message.append("\n");
-            message.append("⏳ You have ").append(pendingCount)
-                    .append(" pending request").append(pendingCount > 1 ? "s" : "")
-                    .append(" awaiting doctor approval.");
+            if (message.length() > 0) {
+                message.append("\n");
+            }
+            message.append(getString(R.string.pending_summary_pending, pendingCount));
         }
 
         // Only show dialog if there are appointments to mention
         if (scheduledCount > 0 || pendingCount > 0) {
             new AlertDialog.Builder(requireContext())
-                    .setTitle("📋 Your Appointments")
+                    .setTitle(R.string.appointments_summary_title)
                     .setMessage(message.toString())
-                    .setPositiveButton("OK", null)
+                    .setPositiveButton(R.string.ok, null)
                     .show();
             
             hasShownAppointmentAlert = true; // Mark as shown for this session

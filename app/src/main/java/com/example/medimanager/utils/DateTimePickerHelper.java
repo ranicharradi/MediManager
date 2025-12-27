@@ -4,6 +4,7 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 
+import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -72,7 +73,8 @@ public final class DateTimePickerHelper {
         TimePickerDialog dialog = new TimePickerDialog(
                 context,
                 (view, hourOfDay, minute) -> {
-                    String amPm = hourOfDay >= 12 ? "PM" : "AM";
+                    String[] amPmStrings = DateFormatSymbols.getInstance().getAmPmStrings();
+                    String amPm = hourOfDay >= 12 ? amPmStrings[1] : amPmStrings[0];
                     int displayHour = hourOfDay % 12;
                     if (displayHour == 0) displayHour = 12;
                     String timeString = String.format(Locale.getDefault(), "%02d:%02d %s", displayHour, minute, amPm);

@@ -32,8 +32,8 @@ public class SessionManager {
         return preferences.getBoolean(Constants.PREF_IS_DOCTOR, false);
     }
 
-    public long getUserId() {
-        return preferences.getLong(Constants.PREF_USER_ID, -1);
+    public int getUserId() {
+        return (int) preferences.getLong(Constants.PREF_USER_ID, -1);
     }
 
     public String getUserEmail() {

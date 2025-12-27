@@ -66,7 +66,7 @@ public class ProfileFragment extends Fragment {
         if (user != null) {
             String displayName = user.getFullName();
             if (isDoctor) {
-                displayName = "Dr. " + displayName;
+                displayName = getString(R.string.doctor_prefix, displayName);
             }
             binding.doctorName.setText(displayName);
             binding.doctorEmail.setText(user.getEmail());
